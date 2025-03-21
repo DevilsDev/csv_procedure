@@ -37,9 +37,11 @@ A secure and clean-code-based Node.js application to upload Excel files (`.xlsx`
 git clone https://github.com/DevilsDev/csv_procedure.git
 cd csv_procedure
 ```
+
 ```bash
 npm install
 ```
+
 ---
 
 ## 🔧 Run the App
@@ -50,7 +52,6 @@ Install dependencies:
 npm install
 ```
 
-
 The server will start on: http://localhost:3000
 
 ---
@@ -60,15 +61,17 @@ The server will start on: http://localhost:3000
 ```bash
 npm run dev
 ```
+
 ---
 
 ## 📤 API (Upload Excel File)
 
-**Endpoint:** `POST /upload`  
-**Content-Type:** `multipart/form-data`  
+**Endpoint:** `POST /upload`
+**Content-Type:** `multipart/form-data`
 **Form field name:** `excel`
 
 **Example with curl:**
+
 ```bash
 curl -F "excel=@./sample.xlsx" http://localhost:3000/upload
 ```
@@ -80,6 +83,7 @@ curl -F "excel=@./sample.xlsx" http://localhost:3000/upload
 ```bash
 npm test
 ```
+
 Runs all unit tests using Jest for the core data-cleaning logic.
 
 ---
@@ -107,59 +111,130 @@ excel-to-csv/
 
 ## 📂 File Descriptions
 
-- **`src/app.js`**  
-  Initializes the Express app, sets up file upload middleware (using Multer), registers routes, and starts the server.
+- **`src/app.js`**Initializes the Express app, sets up file upload middleware (using Multer), registers routes, and starts the server.
+- **`src/routes/fileUpload.js`**Handles the `/upload` route logic: reads uploaded Excel files, cleans them, strips sensitive info, converts to CSV, and saves the output.
+- **`src/utils/cleanWorksheetData.js`**Pure utility function that processes worksheet data. It:
 
-- **`src/routes/fileUpload.js`**  
-  Handles the `/upload` route logic: reads uploaded Excel files, cleans them, strips sensitive info, converts to CSV, and saves the output.
-
-- **`src/utils/cleanWorksheetData.js`**  
-  Pure utility function that processes worksheet data. It:
   - Removes empty rows
   - Trims cells
   - Deduplicates repeated header rows
   - Removes sensitive data like names, emails, phone numbers, national IDs, and date of birth (supports many formats)
-
-- **`__tests__/cleanWorksheetData.test.js`**  
-  Unit tests for the `cleanWorksheetData.js` utility using Jest. Ensures correctness and edge case handling.
-
-- **`uploads/`**  
-  Temporary folder to store uploaded Excel files. Auto-created and excluded from Git.
-
-- **`csvs/`**  
-  Folder to store output `.csv` files after cleaning and conversion.
-
-- **`.gitignore`**  
+- **`__tests__/cleanWorksheetData.test.js`**Unit tests for the `cleanWorksheetData.js` utility using Jest. Ensures correctness and edge case handling.
+- **`uploads/`**Temporary folder to store uploaded Excel files. Auto-created and excluded from Git.
+- **`csvs/`**Folder to store output `.csv` files after cleaning and conversion.
+- **`.gitignore`**
   Prevents committing runtime, temp, or system files like `node_modules/`, `uploads/`, `csvs/`, and `.env`.
 
 ---
 
 ## 🧼 Clean Code Practices Used
 
-- **Single Responsibility**: Each module does one thing and does it well  
-- **Descriptive Names**: Files, variables, and functions clearly reflect their purpose  
-- **Separation of Concerns**: Routing, business logic, and utilities are modularized  
-- **Reusable Utility**: `cleanWorksheetData()` is testable, pure, and independent  
-- **Readable Control Flow**: Logic is written top-down, clearly, and avoids deep nesting  
-- **Minimal Comments, Maximum Clarity**: Code is self-explanatory with strategic inline comments  
+- **Single Responsibility**: Each module does one thing and does it well
+- **Descriptive Names**: Files, variables, and functions clearly reflect their purpose
+- **Separation of Concerns**: Routing, business logic, and utilities are modularized
+- **Reusable Utility**: `cleanWorksheetData()` is testable, pure, and independent
+- **Readable Control Flow**: Logic is written top-down, clearly, and avoids deep nesting
+- **Minimal Comments, Maximum Clarity**: Code is self-explanatory with strategic inline comments
 - **Safe Handling of Input**: Uses `moment.js` to handle date validation safely across formats
 
 ---
 
 ## 🚀 Future Enhancements
 
-- Add frontend UI (drag and drop Excel files)  
-- Export to cloud storage (S3, Google Drive, etc.)  
-- Add email notification after conversion  
-- Store conversion logs and metadata  
-- Support `.xls` and `.ods` formats  
+- Add frontend UI (drag and drop Excel files)
+- Export to cloud storage (S3, Google Drive, etc.)
+- Add email notification after conversion
+- Store conversion logs and metadata
+- Support `.xls` and `.ods` formats
 - Internationalization (i18n) for sensitive keyword detection
 
 ---
 
+## 🛠 How to Test the App with `test_data.xlsx`
+
+Follow these steps to verify that the **Excel-to-CSV Converter App** processes data correctly.
+
+### 📁 Step 1: Place the File in the Correct Directory
+
+- **Option 1:** Keep the file in your **Downloads** folder and provide the full path during upload.
+- **Option 2:** Move `test_data.xlsx` to your project root for easier access:
+
+  C:\Users\\user_nameworkspace\csv_procedure\
+
+---
+
+### 🔧 Step 2: Install Dependencies and Start the App
+
+Make sure all required packages are installed:
+
+```bash
+npm install
+```
+
+---
+
+### 📤 Step 3: Upload the Excel File via API
+
+Since this app supports  **file uploads** , use one of these methods:
+
+#### ✅ **Option 1: Use cURL (Command Line)**
+
+Run the following command in  **Terminal/Command Prompt** , replacing `path/to/test_data.xlsx` with the actual file path:
+
+```bash
+curl -X POST -F "excel=@path/to/test_data.xlsx" http://localhost:3000/upload
+```
+
+Example for Windows (assuming the file is in your project root):
+
+```bash
+curl -X POST -F "excel=@C:\Users\alika\workspace\csv_procedure\test_data.xlsx" http://localhost:3000/upload
+```
+
+---
+
+📄 Step 4: Check the Response
+If successful, the API will return:
+
+```bash
+✅ CSV saved at: /path/to/csvs/converted.csv
+```
+
+* If an error occurs:
+  * 400 Bad Request: No file uploaded or incorrect format.
+  * 500 Internal Server Error: Unexpected issue in processing.
+
+---
+
+### 📂 Step 5: Verify the Generated CSV
+
+1. Navigate to the `csvs/` folder in your project.
+2. Open the generated `.csv` file.
+3. Confirm that:
+
+   * ✅ Empty rows are  **removed** .
+   * ✅ Duplicate headers are  **removed** .
+   * ✅ Extra whitespace is  **trimmed** .
+   * ✅ **Sensitive fields** (Name, Email, Phone, DOB, ID) are  **removed** .
+   * ✅ Data is  **correctly formatted** .
+
+   ---
+
+   ### 🔄 Step 6: Debugging Issues
+
+   If the app  **fails or crashes** , check the following:
+
+
+   * **Check the terminal logs** (`npm run dev` provides live logs).
+   * **Ensure dependencies are installed** (`npm list multer xlsx express`).
+   * **Verify the correct file path** in the upload request.
+   * **Manually open `test_data.xlsx`** to check formatting.
+
+   ---
+
 ## 👨‍💻 Author
 
-**Ali Kahwaji**  
-Clean Code Enthusiast & Node.js Developer  
-GitHub: [github.com/alikahwaji](https://github.com/alikahwaji)  
+**Ali Kahwaji**
+Clean Code Enthusiast & Node.js Developer
+GitHub: [github.com/alikahwaji](https://github.com/alikahwaji)
 LinkedIn: [linkedin.com/in/alikahwaji](https://www.linkedin.com/in/ali-kahwaji-5b4619137?lipi=urn%3Ali%3Apage%3Ad_flagship3_profile_view_base_contact_details%3BONXl6kobT3yNfR%2FWGdO%2Fgg%3D%3D)
