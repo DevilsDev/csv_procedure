@@ -36,15 +36,20 @@ A secure and clean-code-based Node.js application to upload Excel files (`.xlsx`
 ```bash
 git clone https://github.com/yourusername/excel-to-csv.git
 cd excel-to-csv
+```
+```bash
 npm install
-
+```
 ---
 
 ## 🔧 Run the App
 
+Install dependencies:
+
 ```bash
 npm install
-npm start
+```
+
 
 The server will start on: http://localhost:3000
 
@@ -52,7 +57,7 @@ The server will start on: http://localhost:3000
 
 ```bash
 npm run dev
-
+```
 ---
 
 ## 📤 API (Upload Excel File)
@@ -64,6 +69,7 @@ npm run dev
 **Example with curl:**
 ```bash
 curl -F "excel=@./sample.xlsx" http://localhost:3000/upload
+```
 
 ---
 
@@ -71,7 +77,7 @@ curl -F "excel=@./sample.xlsx" http://localhost:3000/upload
 
 ```bash
 npm test
-
+```
 Runs all unit tests using Jest for the core data-cleaning logic.
 
 ---
