@@ -82,22 +82,24 @@ Runs all unit tests using Jest for the core data-cleaning logic.
 
 ---
 
-## 📁 Folder Structure
+## 📂 Folder Structure
 
+```bash
 excel-to-csv/
-├── uploads/                          # Temp Excel files (ignored in Git)
-├── csvs/                             # Output cleaned CSV files
-├── src/
-│   ├── app.js                        # Main Express app
-│   ├── routes/
-│   │   └── fileUpload.js             # Handles Excel upload + conversion
-│   └── utils/
-│       └── cleanWorksheetData.js     # Data cleaning & sensitive info removal
-├── __tests__/
-│   └── cleanWorksheetData.test.js    # Jest tests for data cleaning utility
-├── .gitignore
-├── package.json
-└── README.md
+├── uploads/                 # Temp Excel files (ignored in Git)
+├── csvs/                    # Output cleaned CSV files
+├── src/                     # Source code
+│   ├── app.js               # Main Express app
+│   ├── routes/              # Route handlers
+│   │   └── fileUpload.js    # Handles Excel upload + conversion
+│   ├── utils/               # Utility functions
+│   │   └── cleanWorksheetData.js  # Data cleaning & sensitive info removal
+├── tests/                   # Unit tests
+│   └── cleanWorksheetData.test.js  # Jest tests for data cleaning utility
+├── .gitignore               # Ignore runtime and dependency files
+├── package.json             # Project metadata and dependencies
+└── README.md                # Project documentation
+```
 
 ---
 
@@ -157,5 +159,5 @@ excel-to-csv/
 
 **Ali Kahwaji**  
 Clean Code Enthusiast & Node.js Developer  
-GitHub: [github.com/yourusername](https://github.com/yourusername)  
-LinkedIn: [linkedin.com/in/yourprofile](https://linkedin.com/in/yourprofile)
+GitHub: [github.com/yourusername](https://github.com/alikahwaji)  
+LinkedIn: [linkedin.com/in/yourprofile](https://www.linkedin.com/in/ali-kahwaji-5b4619137?lipi=urn%3Ali%3Apage%3Ad_flagship3_profile_view_base_contact_details%3BONXl6kobT3yNfR%2FWGdO%2Fgg%3D%3D)
