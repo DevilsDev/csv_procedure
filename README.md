@@ -159,5 +159,5 @@ excel-to-csv/
 
 **Ali Kahwaji**  
 Clean Code Enthusiast & Node.js Developer  
-GitHub: [github.com/yourusername](https://github.com/alikahwaji)  
-LinkedIn: [linkedin.com/in/yourprofile](https://www.linkedin.com/in/ali-kahwaji-5b4619137?lipi=urn%3Ali%3Apage%3Ad_flagship3_profile_view_base_contact_details%3BONXl6kobT3yNfR%2FWGdO%2Fgg%3D%3D)
+GitHub: [github.com/alikahwaji](https://github.com/alikahwaji)  
+LinkedIn: [linkedin.com/in/alikahwaji](https://www.linkedin.com/in/ali-kahwaji-5b4619137?lipi=urn%3Ali%3Apage%3Ad_flagship3_profile_view_base_contact_details%3BONXl6kobT3yNfR%2FWGdO%2Fgg%3D%3D)
