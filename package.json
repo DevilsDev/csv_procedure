@@ -1,8 +1,17 @@
 {
   "name": "csv_procedure",
   "version": "2.1.0",
+  "files": [
+    "src/",
+    "public/",
+    "README.md",
+    "LICENSE",
+    "bin/",
+    "!src/**/*.test.js",
+    "!**/__tests__/"
+  ],
   "description": "",
-  "main": "index.js",
+  "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
@@ -24,6 +33,8 @@
   },
   "homepage": "https://github.com/DevilsDev/csv_procedure#readme",
   "dependencies": {
+    "detect-port": "^2.1.0",
+    "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "moment": "^2.30.1",
     "multer": "^1.4.5-lts.2",

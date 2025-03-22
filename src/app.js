@@ -1,21 +1,30 @@
 /**
- * Version: 1.2.0
- * Description: Initializes Express app, handles static frontend serving and file upload endpoint.
+ * Version: 2.2.0
+ * Description: Initializes Express app, handles static frontend, upload routing, and detects available port.
  * Author: Ali Kahwaji
  */
 
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
+const detect = require('detect-port').default;
+require('dotenv').config();
+
 const fileUploadRoute = require('./routes/fileUpload');
 
 const app = express();
-const PORT = 3000;
+const DEFAULT_PORT = process.env.PORT || 3000;
+
+// Ensure necessary directories exist
+['uploads', 'csvs'].forEach(dir => {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+});
 
 // Serve static frontend from /public directory
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Configure multer to store uploaded Excel files
+// Multer config for custom file naming
 const storage = multer.diskStorage({
   destination: 'uploads/',
   filename: (req, file, callback) => {
@@ -26,7 +35,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Upload endpoint with middleware
+// Route: /upload endpoint
 app.use('/upload', upload.single('excel'), fileUploadRoute);
 
 // Global error handler
@@ -35,7 +44,20 @@ app.use((err, req, res, next) => {
   res.status(500).send('Something went wrong on the server.');
 });
 
-// Start the server
-app.listen(PORT, () => {
-  console.log(`✅ Server is running at http://localhost:${PORT}`);
-});
+// Detect an available port and start the server
+detect(DEFAULT_PORT)
+  .then(port => {
+    if (port !== Number(DEFAULT_PORT)) {
+      console.warn(`⚠️ Port ${DEFAULT_PORT} is in use. Falling back to ${port}...`);
+    } else {
+      console.log(`✅ Starting server on port ${port}...`);
+    }
+
+    app.listen(port, () => {
+      console.log(`🚀 Server running at http://localhost:${port}`);
+    });
+  })
+  .catch(err => {
+    console.error('❌ Failed to detect port:', err);
+    process.exit(1);
+  });
