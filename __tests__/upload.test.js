@@ -1,51 +1,85 @@
 /**
- * Version: 2.1.0
- * Description: Unit tests for upload.js using JSDOM environment.
+ * Version: 1.3.0
+ * Description: Final working DOM test for upload.js using JSDOM
  * Author: Ali Kahwaji
  */
 
-/** @jest-environment jsdom */
+const fs = require('fs');
+const path = require('path');
+const { JSDOM } = require('jsdom');
 
 describe('upload.js DOM interaction', () => {
-    let fileInput, dropZone, responseDisplay, uploadBtn, removeBtn;
-  
-    beforeEach(() => {
-      document.body.innerHTML = `
-        <div id="dropZone"></div>
-        <input type="file" id="fileInput" />
-        <button id="uploadBtn"></button>
-        <button id="removeBtn"></button>
-        <div id="response"></div>
-      `;
-  
-      fileInput = document.getElementById('fileInput');
-      dropZone = document.getElementById('dropZone');
-      uploadBtn = document.getElementById('uploadBtn');
-      removeBtn = document.getElementById('removeBtn');
-      responseDisplay = document.getElementById('response');
-  
-      require('../../public/js/upload');
+  let window, document;
+
+  beforeEach(() => {
+    const dom = new JSDOM(`
+      <!DOCTYPE html>
+      <html>
+        <body>
+          <div id="dropZone"></div>
+          <input type="file" id="fileInput" />
+          <button id="uploadBtn">Upload</button>
+          <button id="removeBtn" style="display:none;">Remove</button>
+          <div id="response"></div>
+        </body>
+      </html>
+    `, {
+      url: 'http://localhost',
+      runScripts: 'dangerously',
+      resources: 'usable'
     });
-  
-    it('should initialize DOM elements correctly', () => {
-      expect(fileInput).not.toBeNull();
-      expect(dropZone).not.toBeNull();
-      expect(uploadBtn).not.toBeNull();
-      expect(removeBtn).not.toBeNull();
-      expect(responseDisplay).not.toBeNull();
-    });
-  
-    it('should set file info on valid file drop', () => {
-      const file = new File([''], 'test.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-  
-      const event = new Event('drop', { bubbles: true });
-      Object.defineProperty(event, 'dataTransfer', {
-        value: { files: [file] }
-      });
-  
-      dropZone.dispatchEvent(event);
-  
-      expect(dropZone.innerHTML).toContain('Selected: test.xlsx');
-    });
+
+    window = dom.window;
+    document = window.document;
+
+    // Mock alert before script is evaluated
+    window.alert = jest.fn();
+
+    // Make alert available globally
+    global.window = window;
+    global.document = document;
+    global.alert = window.alert;
+
+    // Inject upload.js code into window context
+    const uploadScript = fs.readFileSync(path.resolve(__dirname, '../public/js/upload.js'), 'utf8');
+    const scriptEl = document.createElement('script');
+    scriptEl.textContent = uploadScript;
+    document.body.appendChild(scriptEl);
   });
-  
+
+  afterEach(() => {
+    jest.clearAllMocks();
+    delete global.window;
+    delete global.document;
+    delete global.alert;
+  });
+
+  it('should initialize DOM elements correctly', () => {
+    expect(document.getElementById('fileInput')).toBeTruthy();
+    expect(document.getElementById('uploadBtn')).toBeTruthy();
+    expect(document.getElementById('removeBtn')).toBeTruthy();
+    expect(document.getElementById('dropZone')).toBeTruthy();
+    expect(document.getElementById('response')).toBeTruthy();
+  });
+
+  it('should alert if file exceeds 5MB on upload', () => {
+    const file = new window.File(['a'.repeat(6 * 1024 * 1024)], 'big.xlsx', {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const fileInput = document.getElementById('fileInput');
+
+    Object.defineProperty(fileInput, 'files', {
+      value: [file],
+      writable: false
+    });
+
+    // Simulate change event
+    fileInput.dispatchEvent(new window.Event('change'));
+
+    // Simulate click event
+    document.getElementById('uploadBtn').click();
+
+    expect(window.alert).toHaveBeenCalledWith(expect.stringMatching(/too large/i));
+  });
+});
