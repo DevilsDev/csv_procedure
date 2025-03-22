@@ -127,6 +127,50 @@ excel-to-csv/
 
 ---
 
+## 🧹 File-Specific Cleaning Rules (Smart Data Normalization)
+
+The app intelligently cleans different types of health Excel files based on filename (e.g. `case-mix.xlsx`, `fare-up.xlsx`, etc.).
+
+### 🧠 Logic Based on File Identifier
+
+| File Name Contains | Treated As   |
+|--------------------|--------------|
+| `case-mix`         | Case-mix     |
+| `fare-up`          | Fare-up      |
+| `holistic`         | Holistic     |
+| `outpatient`       | Outpatient   |
+
+These identifiers are auto-detected and used to apply file-specific cleaning logic.
+
+---
+
+### 🔒 Privacy Rules Applied
+
+- `NHI` is replaced with a consistent anonymized `ID` (e.g. `ID-001`)
+- `DOB` is converted to `Age` (in years) using various date formats
+- Sensitive columns `Contact` and `Address` are removed
+- Unnamed columns (e.g. `Column1`, empty headers) are removed
+- Duplicate columns and rows are deduplicated
+- Empty rows are filtered out
+
+---
+
+### 🧪 Updated Unit Tests
+
+Tests are included for:
+- ID replacement logic
+- Age conversion from various DOB formats
+- Custom headers in Holistic file
+- Handling of missing data or invalid files
+
+Run tests using:
+
+```bash
+npm test
+```
+
+---
+
 ## 🧼 Clean Code Practices Used
 
 - **Single Responsibility**: Each module does one thing and does it well
@@ -139,14 +183,83 @@ excel-to-csv/
 
 ---
 
-## 🚀 Future Enhancements
+## 🚀 Features & Enhancements
 
-- Add frontend UI (drag and drop Excel files)
-- Export to cloud storage (S3, Google Drive, etc.)
-- Add email notification after conversion
-- Store conversion logs and metadata
-- Support `.xls` and `.ods` formats
-- Internationalization (i18n) for sensitive keyword detection
+### ✅ Implemented Features
+
+- **🧾 Drag-and-Drop Frontend UI**  
+  A user-friendly web interface to upload `.xlsx` files with:
+  - Drag-and-drop support
+  - File input fallback
+  - "Remove file" button
+  - Upload progress and feedback
+
+- **📤 File-Type-Specific Cleaning**  
+  Each uploaded file is cleaned based on its identity:
+  - `Case-mix`, `Fare-up`, `Holistic`, `Outpatient`
+  - Consistent patient ID mapping (NHI → ID)
+  - DOB → Age (with multiple date format support)
+  - Removal of sensitive data (Contact, Address)
+  - Removal of duplicate/unnamed columns and rows
+
+- **📁 CSV Output Generation**  
+  Cleaned files are saved in `/csvs/` with timestamped names.
+
+- **📦 Express API for Uploading**  
+  `POST /upload` route supports file upload and routes logic accordingly.
+
+- **🧪 Robust Unit Testing**  
+  Covers:
+  - Data trimming and cleaning
+  - DOB to Age logic
+  - ID mapping consistency
+  - File-type-specific handling
+
+- **🧠 Clean Code + Scalable Architecture**  
+  All code is modular, testable, and follows *Code Complete* principles:
+  - Single responsibility
+  - Meaningful naming
+  - Defensive programming
+  - Descriptive commit history
+
+---
+
+### 🔮 Upcoming / Future Enhancements
+
+- **☁️ Export to Cloud Storage**
+  - Support for S3, Google Drive, or Azure Blob
+  - Allow output files to be synced securely
+
+- **📧 Email Notification After Upload**
+  - Email the user once the file is processed and saved
+  - Include a link to download the CSV
+
+- **📝 Conversion Logs and Metadata**
+  - Track:
+    - Who uploaded what
+    - When
+    - How many rows/columns were cleaned
+    - Output file details
+
+- **🧩 Format Expansion**
+  - Add support for:
+    - `.xls` (older Excel files)
+    - `.ods` (OpenDocument Spreadsheet)
+    - Auto-detection of file type using MIME headers
+
+- **🌍 Internationalization (i18n)**
+  - Localized keyword detection for sensitive data (e.g., address equivalents in other languages)
+  - Language-aware header parsing
+  - Multilingual UI
+
+- **🗃️ Output Organization**
+  - Auto-sort exported CSVs into subfolders by file type
+  - Option to customize output naming
+
+---
+
+✅ With the foundation you've built, these enhancements can be added with minimal friction while maintaining clarity, safety, and scalability.
+
 
 ---
 
@@ -193,7 +306,7 @@ curl -X POST -F "excel=@C:\Users\alika\workspace\csv_procedure\test_data.xlsx" h
 
 ---
 
-📄 Step 4: Check the Response
+### 📄 Step 4: Check the Response
 If successful, the API will return:
 
 ```bash
