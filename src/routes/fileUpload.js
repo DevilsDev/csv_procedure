@@ -1,52 +1,62 @@
 /**
- * Version: 1.0.0
- * Description: Handles Excel file processing, cleaning, and conversion to CSV.
+ * Version: 2.0.0
+ * Description: Handles Excel file uploads and routes them through cleaning logic based on file identity.
  * Author: Ali Kahwaji
  */
 
-const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const XLSX = require('xlsx');
+const express = require('express');
 const cleanWorksheetData = require('../utils/cleanWorksheetData');
 
 const router = express.Router();
 
+/**
+ * POST /upload
+ * Accepts a file upload, processes the Excel content, and saves a cleaned CSV version.
+ */
 router.post('/', (req, res) => {
-  if (!req.file) {
-    return res.status(400).send('⚠️ Excel file is required.');
-  }
-
-  const uploadedFilePath = req.file.path;
-
   try {
-    // Parse the Excel file and extract the first sheet
-    const workbook = XLSX.readFile(uploadedFilePath, { cellDates: true });
-    const firstSheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[firstSheetName];
+    if (!req.file) {
+      return res.status(400).send('No file uploaded');
+    }
 
-    // Convert worksheet to raw 2D array
-    const rawWorksheetData = XLSX.utils.sheet_to_json(worksheet, {
-      defval: '',
-      header: 1
-    });
+    const filePath = req.file.path;
+    const workbook = XLSX.readFile(filePath);
+    const sheetName = workbook.SheetNames[0];
+    const rawSheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
 
-    // Clean and format the worksheet data
-    const tidyData = cleanWorksheetData(rawWorksheetData);
+    const fileIdentifier = extractFileIdentifier(req.file.originalname);
+    const cleanedData = cleanWorksheetData(rawSheet, fileIdentifier);
 
-    // Convert cleaned data to CSV format
-    const csvContent = tidyData.map(row => row.join(',')).join('\n');
-
-    // Save CSV to local output directory
-    const outputFilename = `${Date.now()}-converted.csv`;
+    const outputFilename = `converted-${Date.now()}.csv`;
     const outputPath = path.join(__dirname, '../../csvs', outputFilename);
-    fs.writeFileSync(outputPath, csvContent);
 
-    return res.status(200).send(`✅ CSV successfully saved at: ${outputPath}`);
+    const cleanedSheet = XLSX.utils.aoa_to_sheet(cleanedData);
+    const csv = XLSX.utils.sheet_to_csv(cleanedSheet);
+
+    fs.writeFileSync(outputPath, csv);
+
+    res.status(200).send(`CSV saved at: ${outputPath}`);
   } catch (error) {
-    console.error('❌ Error during file processing:', error);
-    return res.status(500).send('An error occurred while processing the file.');
+    console.error('❌ File processing error:', error);
+    res.status(500).send('An error occurred while processing the file.');
   }
 });
+
+/**
+ * Determines the file identity based on filename keywords
+ * @param {string} filename - Original uploaded filename
+ * @returns {string} - Cleaned identifier for routing
+ */
+function extractFileIdentifier(filename) {
+  const name = filename.toLowerCase();
+  if (name.includes('case-mix')) return 'Case-mix';
+  if (name.includes('fare-up')) return 'Fare-up';
+  if (name.includes('holistic')) return 'Holistic';
+  if (name.includes('outpatient')) return 'Outpatient';
+  return 'Generic';
+}
 
 module.exports = router;

@@ -1,106 +1,65 @@
 /**
- * Version: 1.1.0
- * Description: Unit tests for cleanWorksheetData utility including sensitive data scrubbing.
+ * Version: 2.0.0
+ * Description: Unit tests for cleanWorksheetData utility using mocked file types.
  * Author: Ali Kahwaji
  */
 
 const cleanWorksheetData = require('../src/utils/cleanWorksheetData');
 
-describe('cleanWorksheetData', () => {
-  it('removes empty rows', () => {
+describe('cleanWorksheetData()', () => {
+  it('should remove empty rows, duplicate columns, and unnamed columns', () => {
     const input = [
-      ['Name', 'Age'],
-      ['John', 30],
-      ['', ''],
-      ['Jane', 28]
+      ['NHI', 'Address', 'Contact', 'Column1', 'NHI'],
+      ['A12345', '123 Street', '1234567890', '', 'A12345'],
+      ['', '', '', '', ''],
+      ['A12345', '123 Street', '1234567890', '', 'A12345'],
     ];
 
-    const result = cleanWorksheetData(input);
+    const output = cleanWorksheetData(input, 'Case-mix');
+    const headers = output[0];
+    const data = output.slice(1);
 
-    expect(result.length).toBe(3); // One empty row removed
+    expect(headers).toContain('ID');
+    expect(headers).not.toContain('Column1');
+    expect(headers).not.toContain('Contact');
+    expect(headers).not.toContain('Address');
+    expect(data.length).toBe(1);
   });
 
-  it('trims whitespace in string cells', () => {
+  it('should convert DOB to Age if valid', () => {
     const input = [
-      [' Name ', ' Age '],
-      [' John ', ' 30 ']
+      ['NHI', 'DOB'],
+      ['B67890', '1990-01-01'],
+      ['C54321', '01/01/1980'],
     ];
 
-    const result = cleanWorksheetData(input);
+    const output = cleanWorksheetData(input, 'Fare-up');
+    const headers = output[0];
+    const rows = output.slice(1);
 
-    expect(result[0][0]).toBe('Name');
-    expect(result[1][0]).toBe('John');
+    expect(headers).toContain('ID');
+    expect(headers).toContain('Age');
+    expect(rows[0][1]).toMatch(/\d+/); // Age should be a number
+    expect(rows[1][1]).toMatch(/\d+/);
   });
 
-  it('removes duplicate header rows', () => {
+  it('should preserve custom columns for Holistic and remove NHI', () => {
     const input = [
-      ['Name', 'Age'],
-      ['Name', 'Age'],
-      ['Jane', 22]
+      ['NHI', 'Dietician (12 months)', 'Fatigue (12 months)'],
+      ['Z98765', 'Yes', 'No'],
     ];
 
-    const result = cleanWorksheetData(input);
+    const output = cleanWorksheetData(input, 'Holistic');
+    const headers = output[0];
+    const row = output[1];
 
-    expect(result.length).toBe(2);
-    expect(result[1][0]).toBe('Jane');
+    expect(headers).toContain('ID');
+    expect(headers).not.toContain('NHI');
+    expect(row[0]).toMatch(/^ID-\d{3}$/);
   });
 
-  it('returns empty array if input is not valid', () => {
-    expect(cleanWorksheetData(null)).toEqual([]);
-    expect(cleanWorksheetData({})).toEqual([]);
-  });
-
-  it('removes sensitive data based on headers', () => {
-    const input = [
-      ['Name', 'Age', 'Email', 'Phone'],
-      ['John Doe', 32, 'john@example.com', '123-456-7890'],
-      ['Jane Smith', 27, 'jane@example.com', '098-765-4321']
-    ];
-
-    const result = cleanWorksheetData(input);
-
-    expect(result[1][0]).toBe(''); // Name removed
-    expect(result[1][2]).toBe(''); // Email removed
-    expect(result[1][3]).toBe(''); // Phone removed
-  });
-
-  it('removes sensitive date of birth in various formats', () => {
-    const input = [
-      ['Name', 'DOB', 'Age'],
-      ['John', '01/01/1990', 30],
-      ['Jane', '1995-05-12', 28],
-      ['Mike', 'May 5, 1985', 39]
-    ];
-
-    const result = cleanWorksheetData(input);
-
-    expect(result[1][1]).toBe('');
-    expect(result[2][1]).toBe('');
-    expect(result[3][1]).toBe('');
-  });
-
-  it('removes inferred date cells not labeled as DOB but containing dates', () => {
-    const input = [
-      ['Patient', 'Birth Date'],
-      ['Ali', '12-12-1990'],
-      ['Zara', '1990/01/01']
-    ];
-
-    const result = cleanWorksheetData(input);
-    expect(result[1][1]).toBe('');
-    expect(result[2][1]).toBe('');
-  });
-
-  it('does not remove non-sensitive cells', () => {
-    const input = [
-      ['PatientID', 'Age', 'Condition'],
-      ['P001', 45, 'Diabetes'],
-      ['P002', 50, 'Hypertension']
-    ];
-
-    const result = cleanWorksheetData(input);
-
-    expect(result[1][0]).toBe('P001');
-    expect(result[2][2]).toBe('Hypertension');
+  it('should return empty array for invalid input', () => {
+    const output = cleanWorksheetData([], 'Outpatient');
+    expect(output).toEqual([]);
   });
 });
