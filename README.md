@@ -1,4 +1,4 @@
-# 🧾 Excel-to-CSV Converter API
+# 🧾Clinisync API
 
 A secure and clean-code-based Node.js application to upload Excel files (`.xlsx`), clean and sanitize their data (removing sensitive patient information), and convert them to CSV format.
 
@@ -133,12 +133,12 @@ The app intelligently cleans different types of health Excel files based on file
 
 ### 🧠 Logic Based on File Identifier
 
-| File Name Contains | Treated As   |
-|--------------------|--------------|
-| `case-mix`         | Case-mix     |
-| `fare-up`          | Fare-up      |
-| `holistic`         | Holistic     |
-| `outpatient`       | Outpatient   |
+| File Name Contains | Treated As |
+| ------------------ | ---------- |
+| `case-mix`       | Case-mix   |
+| `fare-up`        | Fare-up    |
+| `holistic`       | Holistic   |
+| `outpatient`     | Outpatient |
 
 These identifiers are auto-detected and used to apply file-specific cleaning logic.
 
@@ -158,6 +158,7 @@ These identifiers are auto-detected and used to apply file-specific cleaning log
 ### 🧪 Updated Unit Tests
 
 Tests are included for:
+
 - ID replacement logic
 - Age conversion from various DOB formats
 - Custom headers in Holistic file
@@ -187,36 +188,29 @@ npm test
 
 ### ✅ Implemented Features
 
-- **🧾 Drag-and-Drop Frontend UI**  
-  A user-friendly web interface to upload `.xlsx` files with:
+- **🧾 Drag-and-Drop Frontend UI**A user-friendly web interface to upload `.xlsx` files with:
+
   - Drag-and-drop support
   - File input fallback
   - "Remove file" button
   - Upload progress and feedback
+- **📤 File-Type-Specific Cleaning**Each uploaded file is cleaned based on its identity:
 
-- **📤 File-Type-Specific Cleaning**  
-  Each uploaded file is cleaned based on its identity:
   - `Case-mix`, `Fare-up`, `Holistic`, `Outpatient`
   - Consistent patient ID mapping (NHI → ID)
   - DOB → Age (with multiple date format support)
   - Removal of sensitive data (Contact, Address)
   - Removal of duplicate/unnamed columns and rows
+- **📁 CSV Output Generation**Cleaned files are saved in `/csvs/` with timestamped names.
+- **📦 Express API for Uploading**`POST /upload` route supports file upload and routes logic accordingly.
+- **🧪 Robust Unit Testing**Covers:
 
-- **📁 CSV Output Generation**  
-  Cleaned files are saved in `/csvs/` with timestamped names.
-
-- **📦 Express API for Uploading**  
-  `POST /upload` route supports file upload and routes logic accordingly.
-
-- **🧪 Robust Unit Testing**  
-  Covers:
   - Data trimming and cleaning
   - DOB to Age logic
   - ID mapping consistency
   - File-type-specific handling
+- **🧠 Clean Code + Scalable Architecture**All code is modular, testable, and follows *Code Complete* principles:
 
-- **🧠 Clean Code + Scalable Architecture**  
-  All code is modular, testable, and follows *Code Complete* principles:
   - Single responsibility
   - Meaningful naming
   - Defensive programming
@@ -227,39 +221,39 @@ npm test
 ### 🔮 Upcoming / Future Enhancements
 
 - **☁️ Export to Cloud Storage**
+
   - Support for S3, Google Drive, or Azure Blob
   - Allow output files to be synced securely
-
 - **📧 Email Notification After Upload**
+
   - Email the user once the file is processed and saved
   - Include a link to download the CSV
-
 - **📝 Conversion Logs and Metadata**
+
   - Track:
     - Who uploaded what
     - When
     - How many rows/columns were cleaned
     - Output file details
-
 - **🧩 Format Expansion**
+
   - Add support for:
     - `.xls` (older Excel files)
     - `.ods` (OpenDocument Spreadsheet)
     - Auto-detection of file type using MIME headers
-
 - **🌍 Internationalization (i18n)**
+
   - Localized keyword detection for sensitive data (e.g., address equivalents in other languages)
   - Language-aware header parsing
   - Multilingual UI
-
 - **🗃️ Output Organization**
+
   - Auto-sort exported CSVs into subfolders by file type
   - Option to customize output naming
 
 ---
 
 ✅ With the foundation you've built, these enhancements can be added with minimal friction while maintaining clarity, safety, and scalability.
-
 
 ---
 
@@ -307,6 +301,7 @@ curl -X POST -F "excel=@C:\Users\alika\workspace\csv_procedure\test_data.xlsx" h
 ---
 
 ### 📄 Step 4: Check the Response
+
 If successful, the API will return:
 
 ```bash
