@@ -18,7 +18,7 @@
     "test": "jest"
   },
   "repository": {
-    "type": "git",
+    "type": "git, module",
     "url": "git+https://github.com/DevilsDev/csv_procedure.git"
   },
   "keywords": [
@@ -41,6 +41,8 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@eslint/js": "^9.23.0",
+    "eslint": "^9.23.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "nodemon": "^3.1.9",

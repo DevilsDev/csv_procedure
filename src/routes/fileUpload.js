@@ -1,6 +1,6 @@
 /**
- * Version: 2.1.0
- * Description: Handles Excel file upload, identifies type, cleans data, and returns downloadable CSV.
+ * Version: 2.2.2
+ * Description: Handles file upload, cleaning, and CSV response.
  * Author: Ali Kahwaji
  */
 
@@ -25,10 +25,9 @@ router.post('/', async (req, res) => {
     }
 
     const ext = path.extname(file.originalname).toLowerCase();
-    const mimetype = file.mimetype;
 
     if (!ALLOWED_EXTENSIONS.includes(ext)) {
-      fs.unlinkSync(file.path); // remove bad file
+      fs.unlinkSync(file.path);
       return res.status(400).send('Unsupported file format.');
     }
 
@@ -54,7 +53,6 @@ router.post('/', async (req, res) => {
 
     xlsx.writeFile(newBook, outputPath, { bookType: 'csv' });
 
-    // Log metadata
     await logUpload({
       original: file.originalname,
       size: file.size,
@@ -62,7 +60,6 @@ router.post('/', async (req, res) => {
       uploadedAt: moment().toISOString()
     });
 
-    // Send file as download
     res.download(outputPath, filename, (err) => {
       if (err) {
         console.error('❌ Download failed:', err);
@@ -76,7 +73,6 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Util: basic audit log
 async function logUpload(entry) {
   const logPath = path.join(__dirname, '../../uploadLog.json');
   let log = [];
@@ -85,14 +81,13 @@ async function logUpload(entry) {
     const data = await fsPromises.readFile(logPath, 'utf-8');
     log = JSON.parse(data);
   } catch {
-    // file may not exist yet
+    console.warn('Log file not found, creating new one.');
   }
 
   log.push(entry);
   await fsPromises.writeFile(logPath, JSON.stringify(log, null, 2));
 }
 
-// Util: filename → identifier
 function extractFileIdentifier(filename) {
   const lower = filename.toLowerCase();
   if (lower.includes('case-mix')) return 'Case-mix';

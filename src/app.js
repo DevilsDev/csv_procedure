@@ -1,6 +1,6 @@
 /**
- * Version: 2.2.0
- * Description: Initializes Express app, handles static frontend, upload routing, and detects available port.
+ * Version: 2.2.1
+ * Description: Express app with auto-port fallback and error-safe middleware
  * Author: Ali Kahwaji
  */
 
@@ -35,16 +35,16 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Route: /upload endpoint
+// Upload route
 app.use('/upload', upload.single('excel'), fileUploadRoute);
 
 // Global error handler
-app.use((err, req, res, next) => {
+app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
   console.error('❌ Server Error:', err.message);
   res.status(500).send('Something went wrong on the server.');
 });
 
-// Detect an available port and start the server
+// Start server on available port
 detect(DEFAULT_PORT)
   .then(port => {
     if (port !== Number(DEFAULT_PORT)) {
