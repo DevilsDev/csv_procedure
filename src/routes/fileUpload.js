@@ -1,62 +1,105 @@
 /**
- * Version: 2.0.0
- * Description: Handles Excel file uploads and routes them through cleaning logic based on file identity.
+ * Version: 2.1.0
+ * Description: Handles Excel file upload, identifies type, cleans data, and returns downloadable CSV.
  * Author: Ali Kahwaji
  */
 
 const fs = require('fs');
+const fsPromises = require('fs/promises');
 const path = require('path');
-const XLSX = require('xlsx');
+const xlsx = require('xlsx');
+const moment = require('moment');
 const express = require('express');
+const router = express.Router();
 const cleanWorksheetData = require('../utils/cleanWorksheetData');
 
-const router = express.Router();
+const ALLOWED_EXTENSIONS = ['.xlsx', '.xls', '.ods'];
+const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 
-/**
- * POST /upload
- * Accepts a file upload, processes the Excel content, and saves a cleaned CSV version.
- */
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).send('No file uploaded');
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).send('No file uploaded.');
     }
 
-    const filePath = req.file.path;
-    const workbook = XLSX.readFile(filePath);
+    const ext = path.extname(file.originalname).toLowerCase();
+    const mimetype = file.mimetype;
+
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      fs.unlinkSync(file.path); // remove bad file
+      return res.status(400).send('Unsupported file format.');
+    }
+
+    if (file.size > MAX_SIZE_BYTES) {
+      fs.unlinkSync(file.path);
+      return res.status(400).send('File is too large. Max 5MB allowed.');
+    }
+
+    const workbook = xlsx.readFile(file.path);
     const sheetName = workbook.SheetNames[0];
-    const rawSheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
+    const sheet = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
+    const fileIdentifier = extractFileIdentifier(file.originalname);
 
-    const fileIdentifier = extractFileIdentifier(req.file.originalname);
-    const cleanedData = cleanWorksheetData(rawSheet, fileIdentifier);
+    const cleanedData = cleanWorksheetData(sheet, fileIdentifier);
 
-    const outputFilename = `converted-${Date.now()}.csv`;
-    const outputPath = path.join(__dirname, '../../csvs', outputFilename);
+    const newSheet = xlsx.utils.aoa_to_sheet(cleanedData);
+    const newBook = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(newBook, newSheet, 'Cleaned');
 
-    const cleanedSheet = XLSX.utils.aoa_to_sheet(cleanedData);
-    const csv = XLSX.utils.sheet_to_csv(cleanedSheet);
+    const timestamp = Date.now();
+    const filename = `converted-${timestamp}.csv`;
+    const outputPath = path.join(__dirname, '../../csvs', filename);
 
-    fs.writeFileSync(outputPath, csv);
+    xlsx.writeFile(newBook, outputPath, { bookType: 'csv' });
 
-    res.status(200).send(`CSV saved at: ${outputPath}`);
-  } catch (error) {
-    console.error('❌ File processing error:', error);
-    res.status(500).send('An error occurred while processing the file.');
+    // Log metadata
+    await logUpload({
+      original: file.originalname,
+      size: file.size,
+      savedAs: filename,
+      uploadedAt: moment().toISOString()
+    });
+
+    // Send file as download
+    res.download(outputPath, filename, (err) => {
+      if (err) {
+        console.error('❌ Download failed:', err);
+        res.status(500).send('Error delivering file.');
+      }
+    });
+
+  } catch (err) {
+    console.error('❌ Server error during file upload:', err);
+    res.status(500).send('Server error.');
   }
 });
 
-/**
- * Determines the file identity based on filename keywords
- * @param {string} filename - Original uploaded filename
- * @returns {string} - Cleaned identifier for routing
- */
+// Util: basic audit log
+async function logUpload(entry) {
+  const logPath = path.join(__dirname, '../../uploadLog.json');
+  let log = [];
+
+  try {
+    const data = await fsPromises.readFile(logPath, 'utf-8');
+    log = JSON.parse(data);
+  } catch {
+    // file may not exist yet
+  }
+
+  log.push(entry);
+  await fsPromises.writeFile(logPath, JSON.stringify(log, null, 2));
+}
+
+// Util: filename → identifier
 function extractFileIdentifier(filename) {
-  const name = filename.toLowerCase();
-  if (name.includes('case-mix')) return 'Case-mix';
-  if (name.includes('fare-up')) return 'Fare-up';
-  if (name.includes('holistic')) return 'Holistic';
-  if (name.includes('outpatient')) return 'Outpatient';
-  return 'Generic';
+  const lower = filename.toLowerCase();
+  if (lower.includes('case-mix')) return 'Case-mix';
+  if (lower.includes('fare-up')) return 'Fare-up';
+  if (lower.includes('holistic')) return 'Holistic';
+  if (lower.includes('outpatient')) return 'Outpatient';
+  return 'unknown';
 }
 
 module.exports = router;

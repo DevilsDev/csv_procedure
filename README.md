@@ -172,6 +172,69 @@ npm test
 
 ---
 
+## 🔄 Application Workflow
+
+```text
+┌──────────────────────────────────────────────┐
+│          1. File Submission (User)           │
+└──────────────────────────────────────────────┘
+         │
+         ▼
+Drag-and-Drop UI (index.html)
+- Supports .xlsx upload
+- Shows selected file & feedback
+         │
+         ▼
+JavaScript Fetch API → POST /upload
+
+┌──────────────────────────────────────────────┐
+│      2. Backend File Handling (Express.js)   │
+└──────────────────────────────────────────────┘
+         │
+         ▼
+Multer Middleware
+- Stores uploaded file in /uploads
+         │
+         ▼
+Extract file identifier from filename
+(e.g. 'case-mix', 'holistic', etc.)
+
+┌──────────────────────────────────────────────┐
+│     3. Data Cleaning & Normalization         │
+└──────────────────────────────────────────────┘
+         │
+         ▼
+cleanWorksheetData(identifier)
+├─ General Cleaning:
+│  - Trim whitespace
+│  - Remove empty rows
+│  - Remove unnamed or duplicate columns
+│  - Remove duplicate rows
+├─ File-Specific Rules:
+│  - Replace NHI → anonymized ID
+│  - Convert DOB → Age (multi-format)
+│  - Remove PII fields (Contact, Address)
+
+┌──────────────────────────────────────────────┐
+│         4. Output Generation (CSV)           │
+└──────────────────────────────────────────────┘
+         │
+         ▼
+Generate CSV from cleaned worksheet
+Save to /csvs with timestamped filename
+
+┌──────────────────────────────────────────────┐
+│          5. Response & Feedback              │
+└──────────────────────────────────────────────┘
+         │
+         ▼
+Return success response:
+“CSV saved at: /csvs/converted-xxxx.csv”
+Display message in frontend UI
+```
+
+---
+
 ## 🧼 Clean Code Practices Used
 
 - **Single Responsibility**: Each module does one thing and does it well

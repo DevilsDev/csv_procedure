@@ -1,6 +1,6 @@
 <!--
-  Version: 1.1.0
-  Description: Drag-and-drop frontend UI for uploading Excel files with option to remove/reset selection.
+  Version: 2.1.0
+  Description: Frontend UI for uploading Excel files with drag-and-drop, reset, and enhanced validation.
   Author: Ali Kahwaji
 -->
 
@@ -8,7 +8,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Excel to CSV Uploader</title>
   <style>
     body {
@@ -82,97 +82,13 @@
 
   <div class="drop-zone" id="dropZone">
     <p>Drag & drop an Excel file here, or click to upload</p>
-    <input type="file" id="fileInput" accept=".xlsx" />
+    <input type="file" id="fileInput" accept=".xlsx,.xls,.ods" />
   </div>
 
   <button id="uploadBtn">Upload</button>
   <button id="removeBtn">Remove</button>
   <div id="response"></div>
 
-  <script>
-    // === DOM Elements ===
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('fileInput');
-    const uploadButton = document.getElementById('uploadBtn');
-    const removeButton = document.getElementById('removeBtn');
-    const responseDisplay = document.getElementById('response');
-
-    let selectedFile = null;
-
-    // === Drag-and-drop & input interactions ===
-    dropZone.addEventListener('click', () => fileInput.click());
-
-    dropZone.addEventListener('dragover', (event) => {
-      event.preventDefault();
-      dropZone.classList.add('dragover');
-    });
-
-    dropZone.addEventListener('dragleave', () => {
-      dropZone.classList.remove('dragover');
-    });
-
-    dropZone.addEventListener('drop', (event) => {
-      event.preventDefault();
-      dropZone.classList.remove('dragover');
-      const file = event.dataTransfer.files[0];
-      handleFileSelection(file);
-    });
-
-    fileInput.addEventListener('change', () => {
-      const file = fileInput.files[0];
-      handleFileSelection(file);
-    });
-
-    // === Main logic ===
-    function handleFileSelection(file) {
-      if (!file || !file.name.endsWith('.xlsx')) {
-        alert('⚠️ Please upload a valid .xlsx Excel file.');
-        return;
-      }
-
-      selectedFile = file;
-      dropZone.innerHTML = `<p>📄 Selected: ${file.name}</p>`;
-      removeButton.style.display = 'inline-block';
-      responseDisplay.textContent = '';
-    }
-
-    async function uploadFile() {
-      if (!selectedFile) {
-        alert('⚠️ No file selected!');
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append('excel', selectedFile);
-      responseDisplay.textContent = 'Uploading...';
-
-      try {
-        const response = await fetch('/upload', {
-          method: 'POST',
-          body: formData
-        });
-
-        const result = await response.text();
-        responseDisplay.textContent = response.ok
-          ? `✅ ${result}`
-          : `❌ Upload failed: ${result}`;
-      } catch (error) {
-        console.error('Upload Error:', error);
-        responseDisplay.textContent = '❌ Error uploading file.';
-      }
-    }
-
-    function removeSelectedFile() {
-      selectedFile = null;
-      fileInput.value = '';
-      dropZone.innerHTML = '<p>Drag & drop an Excel file here, or click to upload</p>';
-      removeButton.style.display = 'none';
-      responseDisplay.textContent = '';
-    }
-
-    // === Button events ===
-    uploadButton.addEventListener('click', uploadFile);
-    removeButton.addEventListener('click', removeSelectedFile);
-  </script>
+  <script src="/js/upload.js"></script>
 </body>
 </html>
