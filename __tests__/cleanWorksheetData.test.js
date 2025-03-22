@@ -1,5 +1,5 @@
 /**
- * Version: 2.0.0
+ * Version: 2.0.1
  * Description: Unit tests for cleanWorksheetData utility using mocked file types.
  * Author: Ali Kahwaji
  */
@@ -21,9 +21,11 @@ describe('cleanWorksheetData()', () => {
 
     expect(headers).toContain('ID');
     expect(headers).not.toContain('Column1');
-    expect(headers).not.toContain('Contact');
-    expect(headers).not.toContain('Address');
+    expect(headers).toContain('Contact');
+    expect(headers).toContain('Address');
     expect(data.length).toBe(1);
+    expect(data[0][headers.indexOf('Contact')]).toBe('');
+    expect(data[0][headers.indexOf('Address')]).toBe('');
   });
 
   it('should convert DOB to Age if valid', () => {
@@ -39,8 +41,10 @@ describe('cleanWorksheetData()', () => {
 
     expect(headers).toContain('ID');
     expect(headers).toContain('Age');
-    expect(rows[0][1]).toMatch(/\d+/); // Age should be a number
-    expect(rows[1][1]).toMatch(/\d+/);
+    expect(typeof rows[0][1]).toBe('number');
+    expect(rows[0][1]).toBeGreaterThan(0);
+    expect(typeof rows[1][1]).toBe('number');
+    expect(rows[1][1]).toBeGreaterThan(0);
   });
 
   it('should preserve custom columns for Holistic and remove NHI', () => {
