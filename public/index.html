@@ -1,0 +1,178 @@
+<!--
+  Version: 1.1.0
+  Description: Drag-and-drop frontend UI for uploading Excel files with option to remove/reset selection.
+  Author: Ali Kahwaji
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Excel to CSV Uploader</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      text-align: center;
+      background: #f4f4f4;
+    }
+
+    h2 {
+      margin-bottom: 1rem;
+    }
+
+    .drop-zone {
+      border: 2px dashed #bbb;
+      border-radius: 10px;
+      padding: 3rem;
+      background: white;
+      color: #777;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .drop-zone.dragover {
+      border-color: #28a745;
+      background: #f0fff5;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    #response {
+      margin-top: 1rem;
+      font-weight: bold;
+      color: #333;
+    }
+
+    button {
+      margin-top: 1rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #uploadBtn {
+      background-color: #28a745;
+      color: white;
+    }
+
+    #uploadBtn:hover {
+      background-color: #218838;
+    }
+
+    #removeBtn {
+      display: none;
+      background-color: #dc3545;
+      color: white;
+      margin-left: 10px;
+    }
+
+    #removeBtn:hover {
+      background-color: #c82333;
+    }
+  </style>
+</head>
+<body>
+  <h2>🧾 Excel to CSV Converter</h2>
+
+  <div class="drop-zone" id="dropZone">
+    <p>Drag & drop an Excel file here, or click to upload</p>
+    <input type="file" id="fileInput" accept=".xlsx" />
+  </div>
+
+  <button id="uploadBtn">Upload</button>
+  <button id="removeBtn">Remove</button>
+  <div id="response"></div>
+
+  <script>
+    // === DOM Elements ===
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const uploadButton = document.getElementById('uploadBtn');
+    const removeButton = document.getElementById('removeBtn');
+    const responseDisplay = document.getElementById('response');
+
+    let selectedFile = null;
+
+    // === Drag-and-drop & input interactions ===
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', (event) => {
+      event.preventDefault();
+      dropZone.classList.remove('dragover');
+      const file = event.dataTransfer.files[0];
+      handleFileSelection(file);
+    });
+
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      handleFileSelection(file);
+    });
+
+    // === Main logic ===
+    function handleFileSelection(file) {
+      if (!file || !file.name.endsWith('.xlsx')) {
+        alert('⚠️ Please upload a valid .xlsx Excel file.');
+        return;
+      }
+
+      selectedFile = file;
+      dropZone.innerHTML = `<p>📄 Selected: ${file.name}</p>`;
+      removeButton.style.display = 'inline-block';
+      responseDisplay.textContent = '';
+    }
+
+    async function uploadFile() {
+      if (!selectedFile) {
+        alert('⚠️ No file selected!');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('excel', selectedFile);
+      responseDisplay.textContent = 'Uploading...';
+
+      try {
+        const response = await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.text();
+        responseDisplay.textContent = response.ok
+          ? `✅ ${result}`
+          : `❌ Upload failed: ${result}`;
+      } catch (error) {
+        console.error('Upload Error:', error);
+        responseDisplay.textContent = '❌ Error uploading file.';
+      }
+    }
+
+    function removeSelectedFile() {
+      selectedFile = null;
+      fileInput.value = '';
+      dropZone.innerHTML = '<p>Drag & drop an Excel file here, or click to upload</p>';
+      removeButton.style.display = 'none';
+      responseDisplay.textContent = '';
+    }
+
+    // === Button events ===
+    uploadButton.addEventListener('click', uploadFile);
+    removeButton.addEventListener('click', removeSelectedFile);
+  </script>
+</body>
+</html>

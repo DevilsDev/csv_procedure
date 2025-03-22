@@ -1,6 +1,6 @@
 /**
- * Version: 1.0.0
- * Description: Initializes the Express application, configures middleware, and routes.
+ * Version: 1.2.0
+ * Description: Initializes Express app, handles static frontend serving and file upload endpoint.
  * Author: Ali Kahwaji
  */
 
@@ -12,21 +12,30 @@ const fileUploadRoute = require('./routes/fileUpload');
 const app = express();
 const PORT = 3000;
 
-// Configure file upload storage location and filename pattern
-const excelStorage = multer.diskStorage({
+// Serve static frontend from /public directory
+app.use(express.static(path.join(__dirname, '../public')));
+
+// Configure multer to store uploaded Excel files
+const storage = multer.diskStorage({
   destination: 'uploads/',
   filename: (req, file, callback) => {
-    const timestampedFilename = `${Date.now()}-${file.originalname}`;
-    callback(null, timestampedFilename);
+    const safeName = file.originalname.replace(/\s+/g, '_');
+    const timestampedName = `${Date.now()}-${safeName}`;
+    callback(null, timestampedName);
   }
 });
+const upload = multer({ storage });
 
-const uploadExcelFile = multer({ storage: excelStorage });
+// Upload endpoint with middleware
+app.use('/upload', upload.single('excel'), fileUploadRoute);
 
-// Route for file upload and conversion
-app.use('/upload', uploadExcelFile.single('excel'), fileUploadRoute);
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('❌ Server Error:', err.message);
+  res.status(500).send('Something went wrong on the server.');
+});
 
-// Start server
+// Start the server
 app.listen(PORT, () => {
-  console.log(`✅ Server is running on http://localhost:${PORT}`);
+  console.log(`✅ Server is running at http://localhost:${PORT}`);
 });
