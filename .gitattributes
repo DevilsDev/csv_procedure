@@ -1,0 +1,19 @@
+# Auto normalize line endings for cross-platform support
+* text=auto
+
+# Treat JS/JSON/HTML/CSS as text files
+*.js     text
+*.json   text
+*.html   text
+*.css    text
+*.md     text
+*.yml    text
+*.ts     text
+
+# Prevent test and build files from triggering diffs
+coverage/* linguist-vendored
+csvs/* linguist-generated
+uploads/* linguist-generated
+*.csv linguist-generated
+*.xlsx linguist-generated
+*.ods linguist-generated

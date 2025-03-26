@@ -1,0 +1,39 @@
+# Ignore dev/test/config files
+__tests__/
+*.test.js
+*.spec.js
+jest.config.js
+jest.setup.js
+coverage/
+.vscode/
+.eslintrc.*
+.prettierrc*
+.gitignore
+.gitattributes
+uploadLog.json
+
+# Ignore runtime artifacts
+uploads/
+csvs/
+*.xlsx
+*.ods
+*.csv
+
+# Ignore local env files
+.env*
+!.env.example
+
+# Ignore documentation and screenshots
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+docs/
+screenshots/
+
+# Ignore frontend/public assets
+/public/
+*.html
+*.css
+*.js.map
