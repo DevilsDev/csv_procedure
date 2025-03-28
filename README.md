@@ -1,165 +1,97 @@
-# 🧾 Clinisync
+# Clinisync
 
-A clean, privacy-first Node.js and Express.js application that transforms messy healthcare Excel files into secure, standardized CSVs. Built for automation, extensibility, and clarity — with clean code, automated testing, and intelligent data handling at its core.
+[![Build Status](https://img.shields.io/github/actions/workflow/status/DevilsDev/csv_procedure/ci.yml?branch=main)](https://github.com/DevilsDev/csv_procedure/actions)
+[![License](https://img.shields.io/github/license/DevilsDev/csv_procedure)](LICENSE)
+[![Documentation](https://img.shields.io/badge/docs-online-blue)](https://devilsdev.github.io/csv_procedure/)
 
-## 📊 Project Status
+Clinisync is a modular, extensible ETL platform designed to securely clean and transform healthcare data from spreadsheet files into standardized, de-identified CSVs.
 
-[![Local CI](https://img.shields.io/badge/tests-passing-brightgreen)](#)
-[![Coverage](https://img.shields.io/badge/coverage-90%25-yellowgreen)](#)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-[![Node Version](https://img.shields.io/badge/node-18%2B-blue.svg)](https://nodejs.org/)
-[![Version](https://img.shields.io/badge/version-2.2.1-blue.svg)](./CHANGELOG.md)
+Built with Node.js and Express, it provides both API and CLI interfaces and supports multi-sheet Excel processing with full privacy compliance, unit tests, CI/CD integration, and documentation powered by Docusaurus.
 
+---
 
-## 🚀 Key Features
+## 🚀 Getting Started
 
-- 🧾 Drag-and-drop frontend upload UI
-- 🧼 Cleans Excel data (`.xlsx`, `.xls`, `.ods`)
-- 🔐 Strips sensitive information (DOB → Age, NHI → anonymized ID, Contact, Address)
-- 🧠 Intelligent per-file cleaning rules (case-mix, holistic, etc.)
-- 🧪 Robust unit + integration tests using Jest & Supertest
-- 📤 Exports cleaned CSVs to `/csvs/` directory
-- 🧹 Follows clean code & Code Complete principles
-- 🔄 Detects available port and auto-starts
-- ⚙️ Production-safe `.env` support and logs
-- 🗂️ Modular and scalable folder structure
-
-## 🛠 Technology Stack
-
-| Category       | Stack                      |
-|----------------|-----------------------------|
-| Backend        | Node.js, Express.js         |
-| File Uploads   | Multer                      |
-| Excel Parsing  | xlsx                        |
-| Date Handling  | moment.js                   |
-| Port Detection | detect-port                 |
-| Testing        | Jest, Supertest, jsdom      |
-
-## 📦 Installation
+### Install & Run
 
 ```bash
-git clone https://github.com/DevilsDev/csv_procedure.git
-cd csv_procedure
 npm install
-```
-
-## 🔧 Running the App
-
-Start the app in development mode with auto-restart:
-
-```bash
 npm run dev
 ```
 
-The server will start at the first available port (default is `3000`):
-
-```
-http://localhost:3000
-```
-
-## 📤 Upload API
-
-**Endpoint:** `POST /upload`  
-**Content-Type:** `multipart/form-data`  
-**Form field name:** `excel`
-
-**cURL Example:**
+### Upload Files via API
 
 ```bash
-curl -F "excel=@./path/to/sample.xlsx" http://localhost:3000/upload
+curl -F "excel=@path/to/input.xlsx" http://localhost:3000/upload
 ```
 
-## 📄 Output Example
+Returns a JSON response with a list of generated cleaned CSV files.
 
-Cleaned files will be saved in the `/csvs/` directory:
+---
 
-```bash
-/csvs/converted-1695568721231.csv
+## 🧼 Cleaning Rules
+
+- `NHI` → anonymized `ID-001`, `ID-002`, etc.
+- `DOB` → `Age` (accurate, format-tolerant)
+- Removes: `Address`, `Contact`, unnamed columns
+- Applies rules consistently across all sheets
+
+---
+
+## 📁 Project Structure
+
+```
+csv_procedure/
+├── src/
+│   ├── etl/                # ETL modules: extract, transform, load, idMapper
+│   └── routes/             # Express upload route
+├── __tests__/              # Jest test suite
+├── docs/                   # Docusaurus site (see /docs/README.md)
+├── VERSION                 # Current release version
+├── CHANGELOG.md            # Project changelog
+└── README.md
 ```
 
-## 🧪 Run Tests
+---
+
+## 🧪 Testing
 
 ```bash
 npm test
 ```
 
-- Runs unit tests for `cleanWorksheetData`
-- Includes integration tests for `/upload`
-- Simulates frontend logic via jsdom
+Includes full unit and integration coverage with Jest.
 
-## 📂 Project Structure
+---
+
+## 📝 Documentation
+
+Full docs available at:  
+**https://devilsdev.github.io/csv_procedure/**
+
+To run locally:
 
 ```bash
-csv_procedure/
-├── public/                 # Frontend UI (index.html, upload.js)
-├── src/
-│   ├── app.js              # Express app entry point
-│   ├── routes/
-│   │   └── fileUpload.js   # Upload route + cleaning logic
-│   └── utils/
-│       └── cleanWorksheetData.js  # Data sanitizer
-├── __tests__/              # Unit and integration tests
-│   ├── cleanWorksheetData.test.js
-│   ├── upload.test.js
-│   └── uploadRoute.test.js
-├── uploads/                # Temporary Excel files
-├── csvs/                   # Cleaned CSV output
-├── .env                    # Optional environment variables
-├── .gitignore              # Ignore uploads, csvs, node_modules, etc.
-├── jest.config.js          # Custom test environment config
-├── jest.setup.js           # Polyfills (TextEncoder, window.alert)
-└── README.md
+cd docs
+npm install
+npm run start
 ```
 
-## 🧠 File-Based Cleaning Logic
+To deploy:
 
-| File Name Contains | Type        | Special Logic                     |
-|--------------------|-------------|-----------------------------------|
-| `case-mix`         | Case-mix    | Replace NHI → ID, DOB → Age       |
-| `fare-up`          | Fare-up     | Remove Contact/Address            |
-| `holistic`         | Holistic    | Retain only holistic fields       |
-| `outpatient`       | Outpatient  | Custom parsing logic (future)     |
-
-## 🔒 Data Privacy Rules
-
-- ✅ Replaces `NHI` with anonymized `ID-XXX`
-- ✅ Converts `DOB` to `Age` (multi-format parsing)
-- ✅ Removes `Contact`, `Address`, duplicate headers
-- ✅ Filters empty or redundant rows
-- ✅ Cleans whitespace and standardizes structure
-
-## 🔄 Intelligent Workflow
-
-```text
-1. Upload via UI or API
-2. File saved to /uploads/
-3. Identifier auto-detected (case-mix, holistic, etc.)
-4. Data cleaned with general + custom rules
-5. Cleaned CSV written to /csvs/
-6. UI/API returns download path or message
+```bash
+./deploy-gh-pages.sh
 ```
 
-## 🧼 Clean Code Practices Followed
+---
 
-- ✅ Modular architecture with separation of concerns
-- ✅ Descriptive variable & function naming
-- ✅ Defensive programming (try/catch, fallbacks)
-- ✅ Error-safe upload handling
-- ✅ Readable top-down logic (Code Complete)
-- ✅ Fully testable utilities and APIs
+## 📦 Release History
 
-## 🔮 Upcoming Enhancements
+See [`CHANGELOG.md`](./CHANGELOG.md)
 
-- ☁️ Export to cloud storage (S3, Drive, etc.)
-- 📧 Email notification on successful upload
-- 🗂️ Output sorting by type/date
-- 📝 Conversion logs with metadata (rows cleaned, time)
-- 🧩 Support for `.ods`, `.xls` (legacy formats)
-- 🌍 i18n for multilingual data field detection
-- 🧪 CLI support for batch Excel processing
+---
 
-## 👨‍💻 Author
+## 📄 License
 
-**Ali Kahwaji**  
-Clean Code Enthusiast & Node.js Developer  
-[📂 GitHub](https://github.com/alikahwaji) • [🔗 LinkedIn](https://www.linkedin.com/in/ali-kahwaji-5b4619137)
+Licensed under the MIT License.  
+(c) Ali Kahwaji, 2025

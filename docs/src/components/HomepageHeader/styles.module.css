@@ -1,0 +1,46 @@
+
+/**
+ * Version: 2.4.0
+ * Description: HomepageHeader module styles for Clinisync Docs
+ * Author: Ali Kahwaji
+ */
+
+ .heroBanner {
+  padding: 3rem 1rem;
+  text-align: left;
+  background-color: var(--ifm-background-color);
+}
+
+.heroWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.heroContent {
+  flex: 1;
+}
+
+.heroImage {
+  flex: 1;
+  text-align: center;
+}
+
+.heroImage img {
+  max-width: 100%;
+  height: auto;
+}
+
+.heroButtons {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .heroWrapper {
+    flex-direction: row;
+    align-items: center;
+  }
+}

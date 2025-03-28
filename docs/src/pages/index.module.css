@@ -3,21 +3,84 @@
  * and scoped locally.
  */
 
-.heroBanner {
-  padding: 4rem 0;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
+ .main {
+  padding: 4rem 2rem;
+  background-color: var(--ifm-background-color);
 }
 
-@media screen and (max-width: 996px) {
-  .heroBanner {
-    padding: 2rem;
-  }
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+}
+
+.heroContent {
+  flex: 1;
+  min-width: 300px;
+}
+
+.heroImage {
+  flex: 1;
+  min-width: 300px;
+  text-align: center;
+}
+
+.heroImage img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+
+.title {
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: var(--ifm-heading-color);
+}
+
+.subtitle {
+  font-size: 1.25rem;
+  margin: 1rem 0 2rem;
+  color: var(--ifm-font-color-base);
 }
 
 .buttons {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.button {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  background-color: #0057b8;
+  color: #fff;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background 0.3s ease;
+}
+
+.button:hover {
+  background-color: #004494;
+}
+
+.buttonOutline {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  color: #0057b8;
+  background-color: transparent;
+  border: 2px solid #0057b8;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.buttonOutline:hover {
+  background-color: #0057b8;
+  color: #fff;
 }

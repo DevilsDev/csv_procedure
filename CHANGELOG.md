@@ -4,6 +4,16 @@ All notable changes to the Clinisync project will be documented in this file.
 
 ---
 
+## [2.4.1] - 2025-03-26
+### 🧹 Final Polish: Version File & Docs
+
+- Added `VERSION` file for CLI & release automation
+- Committed `CHANGELOG.md` tracking all historical milestones
+- Verified test suite, folder structure, and naming alignment
+- Marked official release point for GitHub and internal registry
+
+---
+
 ## [2.4.0] - 2025-03-26
 ### 🔁 Major Refactor: ETL Pipeline
 

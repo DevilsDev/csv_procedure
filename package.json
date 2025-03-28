@@ -32,6 +32,9 @@
     "url": "https://github.com/DevilsDev/csv_procedure/issues"
   },
   "homepage": "https://github.com/DevilsDev/csv_procedure#readme",
+  "bin": {
+  "clinisync": "./bin/clinisync.js"
+},
   "dependencies": {
     "detect-port": "^2.1.0",
     "dotenv": "^16.4.7",

@@ -21,9 +21,11 @@ describe('POST /upload', () => {
       .post('/upload')
       .attach('excel', path.join(__dirname, 'fixtures', 'case-mix-sample.xlsx'));
 
-    expect(res.statusCode).toBe(200);
-    expect(res.header['content-type']).toContain('text/csv');
-    expect(res.header['content-disposition']).toContain('attachment');
+      expect(res.statusCode).toBe(200);
+      expect(res.header['content-type']).toContain('application/json');
+      expect(res.body).toHaveProperty('outputs');
+      expect(Array.isArray(res.body.outputs)).toBe(true);
+      
   });
 
   it('should reject unsupported file types', async () => {

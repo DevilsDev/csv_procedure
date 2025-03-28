@@ -1,21 +1,21 @@
 /**
- * Version: 2.0.0
- * Description: Docusaurus configuration for Clinisync Docs
+ * Version: 2.4.0
+ * Description: Docusaurus configuration for Clinisync Docs with refined UX
  * Author: Ali Kahwaji
- * Updated: Includes Algolia search and GitHub Pages deployment
+ * Updated: Modern UI polish, footer simplification, GitHub Pages ready
  * @type {import('@docusaurus/types').Config}
  */
 
 export default {
   title: 'Clinisync Docs',
   tagline: 'Clean. Convert. Protect.',
-  url: 'https://your-org.github.io',
-  baseUrl: '/clinisync/',
+  url: 'https://devilsdev.github.io',
+  baseUrl: '/csv_procedure/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon-from-original.png',
-  organizationName: 'your-org', // GitHub org/user
-  projectName: 'clinisync',     // GitHub repo name
+  organizationName: 'DevilsDev', // GitHub user/org
+  projectName: 'csv_procedure',  // GitHub repo
 
   i18n: {
     defaultLocale: 'en',
@@ -28,12 +28,11 @@ export default {
       logo: {
         alt: 'Clinisync Logo',
         src: 'img/clinisync-logo-final.svg',
-        srcDark: 'img/clinisync-darkmode.png' // optional custom logo path
+        srcDark: 'img/clinisync-darkmode.png',
       },
       items: [
-        { to: '/', label: 'Docs', position: 'left' },
         {
-          href: 'https://github.com/your-org/clinisync',
+          href: 'https://github.com/DevilsDev/csv_procedure',
           label: 'GitHub',
           position: 'right',
         },
@@ -44,9 +43,9 @@ export default {
       style: 'dark',
       links: [
         {
-          title: 'Docs',
+          title: 'Mission',
           items: [
-            { label: 'Getting Started', to: '/' },
+            { label: 'About', to: '/about' },
             { label: 'API', to: '/api-upload' },
             { label: 'Cleaning Rules', to: '/cleaning-rules' },
           ],
@@ -54,7 +53,10 @@ export default {
         {
           title: 'Community',
           items: [
-            { label: 'GitHub', href: 'https://github.com/your-org/clinisync' },
+            {
+              label: 'GitHub',
+              href: 'https://github.com/DevilsDev/csv_procedure',
+            },
           ],
         },
       ],
