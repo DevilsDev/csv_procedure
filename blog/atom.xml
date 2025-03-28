@@ -6,7 +6,7 @@
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://devilsdev.github.io/csv_procedure/blog"/>
     <subtitle>Clinisync Docs Blog</subtitle>
-    <icon>https://devilsdev.github.io/csv_procedure/img/favicon.ico</icon>
+    <icon>https://devilsdev.github.io/csv_procedure/img/favicon-from-original.png</icon>
     <entry>
         <title type="html"><![CDATA[Welcome]]></title>
         <id>https://devilsdev.github.io/csv_procedure/blog/welcome</id>
