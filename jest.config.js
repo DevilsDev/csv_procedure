@@ -14,7 +14,7 @@ module.exports = {
   verbose: true,
   collectCoverage: true,
   coverageDirectory: 'coverage',
-  globalSetup: require('path').join(__dirname, 'jest.globalSetup.js'),
+  globalSetup: path.join(__dirname, 'src', 'utils', 'jest.globalSetup.js'),
   coveragePathIgnorePatterns: [
     '/node_modules/',
     '/public/',
