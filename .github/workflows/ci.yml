@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Lint and Test
+    name: Lint, Test, and Report Coverage
     runs-on: ubuntu-latest
 
     steps:
@@ -26,5 +26,15 @@ jobs:
       - name: Run linter
         run: npx eslint src/ --ext .js
 
-      - name: Run tests
+      - name: Verify required test fixtures
+        run: |
+          test -f "__tests__/fixtures/case-mix-sample.xlsx"
+          test -f "__tests__/fixtures/invalid.txt"
+
+      - name: Run tests with coverage
         run: npm test
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }} # 🔐 Set this in GitHub repo secrets
