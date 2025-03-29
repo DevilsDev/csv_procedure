@@ -3,25 +3,35 @@
 All notable changes to the Clinisync project will be documented in this file.
 
 ---
+
 ## [2.5.0] - 2025-03-30
 
-### Added
-- 📦 Automated test fixture generator (`generateFixtures.js`)
-- 🧪 Edge-case tests for `transformSheet` and `cleanWorksheetData`
-- 🧪 End-to-end tests for `/upload` route including:
-  - Valid .xlsx uploads
-  - Invalid file format
-  - Missing uploads
-  - Oversized file uploads
+### ✨ Added
+- Automated fixture generator utility `src/utils/generateFixtures.js`
+- `npm run generate:fixtures` script for one-command fixture regeneration
+- Edge-case test suites for:
+  - `transformSheet` → `__tests__/etl/transform.edge.test.js`
+  - `cleanWorksheetData` → `__tests__/utils/cleanWorksheetData.edge.test.js`
+- Integration tests for `/upload` route including:
+  - Valid Excel uploads
+  - Invalid file formats (e.g., `.txt`)
+  - Missing file uploads
+  - Oversized file rejection (>5MB)
 
-### Changed
-- ♻️ Test suite now regenerates fixtures before test runs
-- 🔁 Refactored `uploadRoute.test.js` for cleaner path resolution and isolation
-- ✅ Coverage increased to 93%+ across all modules
+### ♻️ Changed
+- `uploadRoute.test.js` refactored for improved cross-platform path resolution
+- Tests now auto-regenerate fixtures before running using `generateAllFixtures()`
+- Reorganized test structure under `__tests__`, including fixture isolation
 
-### Fixed
-- 🐛 Fixture loading issues on Windows paths
-- 🐛 toThrow test message mismatch in `load.test.js`
+### 🐛 Fixed
+- Broken test cases in `load.test.js` (updated error messages)
+- Inconsistent path resolution for fixture access on Windows
+- `globalSetup` fixture injection issues now resolved with local regeneration
+
+### 📊 Coverage
+- Overall test coverage increased to **93%+**
+- 100% function coverage in core ETL modules (`idMapper`, `cleanWorksheetData`, etc.)
+- Added edge case handling for mixed headers, blanks, and nulls
 
 ---
 
