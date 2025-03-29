@@ -1,10 +1,10 @@
 # Clinisync
 
-![CI](https://github.com/alikahwaji/csv_procedure/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/DevilsDev/csv_procedure/actions/workflows/ci.yml/badge.svg)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/DevilsDev/csv_procedure/ci.yml?branch=main)](https://github.com/DevilsDev/csv_procedure/actions)
 [![License](https://img.shields.io/github/license/DevilsDev/csv_procedure)](LICENSE)
 [![Documentation](https://img.shields.io/badge/docs-online-blue)](https://devilsdev.github.io/csv_procedure/)
-[![codecov](https://codecov.io/gh/alikahwaji/csv_procedure/branch/main/graph/badge.svg)](https://codecov.io/gh/alikahwaji/csv_procedure)
+[![codecov](https://codecov.io/gh/DevilsDev/csv_procedure/branch/main/graph/badge.svg)](https://codecov.io/gh/alikahwaji/csv_procedure)
 
 Clinisync is a modular, extensible ETL platform designed to securely clean and transform healthcare data from spreadsheet files into standardized, de-identified CSVs.
 
