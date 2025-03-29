@@ -1,69 +1,63 @@
 /**
- * Version: 2.0.1
- * Description: Unit tests for cleanWorksheetData utility using mocked file types.
+ * Version: 2.4.0
+ * Description: Unit tests for cleanWorksheetData() function to validate data anonymization and cleaning.
  * Author: Ali Kahwaji
  */
 
-const cleanWorksheetData = require('../src/utils/cleanWorksheetData');
+const cleanWorksheetData = require('../src/utils/cleanWorkSheetData');
 
 describe('cleanWorksheetData()', () => {
-  it('should remove empty rows, duplicate columns, and unnamed columns', () => {
+  it('should return cleaned data with anonymized IDs and calculated ages', () => {
     const input = [
-      ['NHI', 'Address', 'Contact', 'Column1', 'NHI'],
-      ['A12345', '123 Street', '1234567890', '', 'A12345'],
-      ['', '', '', '', ''],
-      ['A12345', '123 Street', '1234567890', '', 'A12345'],
+      ['Name', 'NHI', 'DOB', 'Contact', 'Address'],
+      ['Ali', 'ABC1234', '1990-01-01', '021-1234567', '123 Main St'],
+      ['Sara', 'XYZ5678', '1985-06-15', '021-9876543', '456 Elm St']
     ];
 
-    const output = cleanWorksheetData(input, 'Case-mix');
-    const headers = output[0];
-    const data = output.slice(1);
+    const result = cleanWorksheetData(input);
 
-    expect(headers).toContain('ID');
-    expect(headers).not.toContain('Column1');
-    expect(headers).toContain('Contact');
-    expect(headers).toContain('Address');
-    expect(data.length).toBe(1);
-    expect(data[0][headers.indexOf('Contact')]).toBe('');
-    expect(data[0][headers.indexOf('Address')]).toBe('');
+    expect(result[0]).toEqual(['Name', 'ID', 'Age']); // Headers
+    expect(result[1][0]).toBe('Ali');
+    expect(result[1][1]).toMatch(/^ID-\d{3}$/);
+    expect(typeof result[1][2]).toBe('number');
   });
 
-  it('should convert DOB to Age if valid', () => {
+  it('should remove unnamed columns and rows with all empty cells', () => {
     const input = [
-      ['NHI', 'DOB'],
-      ['B67890', '1990-01-01'],
-      ['C54321', '01/01/1980'],
+      ['Column A', 'Name', '', 'NHI'],
+      ['', '', '', ''],
+      ['ColA data', 'Ali', '', 'NHI123']
     ];
 
-    const output = cleanWorksheetData(input, 'Fare-up');
-    const headers = output[0];
-    const rows = output.slice(1);
-
-    expect(headers).toContain('ID');
-    expect(headers).toContain('Age');
-    expect(typeof rows[0][1]).toBe('number');
-    expect(rows[0][1]).toBeGreaterThan(0);
-    expect(typeof rows[1][1]).toBe('number');
-    expect(rows[1][1]).toBeGreaterThan(0);
+    const result = cleanWorksheetData(input);
+    expect(result[0]).toEqual(['Name', 'ID']);
+    expect(result.length).toBe(2); // 1 header + 1 valid row
   });
 
-  it('should preserve custom columns for Holistic and remove NHI', () => {
+  it('should return empty array for null or non-array input', () => {
+    expect(cleanWorksheetData(null)).toEqual([]);
+    expect(cleanWorksheetData(undefined)).toEqual([]);
+    expect(cleanWorksheetData({})).toEqual([]);
+  });
+
+  it('should not duplicate identical rows after transformation', () => {
     const input = [
-      ['NHI', 'Dietician (12 months)', 'Fatigue (12 months)'],
-      ['Z98765', 'Yes', 'No'],
+      ['Name', 'NHI', 'DOB'],
+      ['Ali', 'ABC123', '1990-01-01'],
+      ['Ali', 'ABC123', '1990-01-01']
     ];
 
-    const output = cleanWorksheetData(input, 'Holistic');
-    const headers = output[0];
-    const row = output[1];
-
-    expect(headers).toContain('ID');
-    expect(headers).not.toContain('NHI');
-    expect(row[0]).toMatch(/^ID-\d{3}$/);
+    const result = cleanWorksheetData(input);
+    expect(result.length).toBe(2); // 1 header + 1 unique row
   });
 
-  it('should return empty array for invalid input', () => {
-    const output = cleanWorksheetData([], 'Outpatient');
-    expect(output).toEqual([]);
+  it('should replace invalid DOB with empty Age', () => {
+    const input = [
+      ['Name', 'NHI', 'DOB'],
+      ['Ali', 'ABC123', 'invalid-date']
+    ];
+
+    const result = cleanWorksheetData(input);
+    expect(result[1][2]).toBe('');
   });
 });

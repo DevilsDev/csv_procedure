@@ -48,3 +48,4 @@ public/base.css
 # Others
 .DS_Store
 .idea/
+# !__tests__/fixtures/*

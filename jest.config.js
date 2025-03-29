@@ -12,11 +12,13 @@ module.exports = {
   verbose: true,
   collectCoverage: true,
   coverageDirectory: 'coverage',
+  globalSetup: './jest.globalSetup.js',
   coveragePathIgnorePatterns: [
     '/node_modules/',
     '/public/',
     '/uploads/',
     '/csvs/',
+    '__tests__/fixtures/'
   ],
   clearMocks: true,
   resetMocks: true,
