@@ -6,6 +6,7 @@
 
 module.exports = {
   testEnvironment: 'node',
+  rootDir: './',
   globalSetup: '<rootDir>/jest.globalSetup.js', // ✅ Use <rootDir> prefix
   setupFiles: ['<rootDir>/jest.setup.js'],
   testMatch: ['**/__tests__/**/*.test.js'],
