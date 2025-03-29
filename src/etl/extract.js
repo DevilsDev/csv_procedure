@@ -1,35 +1,37 @@
 /**
- * Version: 1.0.0
- * Description: Extracts all sheets from a spreadsheet file and converts them to row-based arrays.
+ * Version: 2.4.0
+ * Description: Extracts worksheet data from all sheets in an Excel file using row-based format.
  * Author: Ali Kahwaji
  */
 
-const xlsx = require('xlsx');
-const path = require('path');
 const fs = require('fs');
+const path = require('path');
+const xlsx = require('xlsx');
 
 /**
- * Extracts all sheets from the given Excel file.
+ * Extracts structured data from each sheet of an uploaded spreadsheet.
  *
  * @param {string} filePath - Absolute path to the uploaded Excel file
  * @returns {Array<{ name: string, rows: Array<Array<any>> }>}
+ * @throws {Error} If the file path is invalid or unreadable
  */
 function extractSheets(filePath) {
-  if (!filePath || !fs.existsSync(filePath)) {
-    throw new Error('Invalid file path provided to extractSheets().');
+  if (!filePath || typeof filePath !== 'string' || !fs.existsSync(filePath)) {
+    throw new Error('❌ Invalid or missing file path provided to extractSheets().');
   }
 
   const workbook = xlsx.readFile(filePath);
+  const sheets = workbook.SheetNames;
   const extracted = [];
 
-  for (const sheetName of workbook.SheetNames) {
-    const raw = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName], {
-      header: 1, // Raw row-by-row format
-      defval: '' // Fill undefined cells with empty string
+  for (const name of sheets) {
+    const rawRows = xlsx.utils.sheet_to_json(workbook.Sheets[name], {
+      header: 1,
+      defval: '', // fill empty cells with empty string
     });
 
-    if (Array.isArray(raw) && raw.length > 0) {
-      extracted.push({ name: sheetName, rows: raw });
+    if (Array.isArray(rawRows) && rawRows.length > 0) {
+      extracted.push({ name, rows: rawRows });
     }
   }
 

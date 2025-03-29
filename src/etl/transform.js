@@ -1,69 +1,73 @@
 /**
- * Version: 1.0.0
- * Description: Applies anonymization and cleaning rules to a single sheet.
+ * Version: 2.4.0
+ * Description: Applies anonymization and data cleaning rules to a spreadsheet sheet, including NHI→ID mapping and DOB→Age transformation.
  * Author: Ali Kahwaji
  */
 
 const { getAnonymizedId } = require('./idMapper');
 
 /**
- * Transforms a sheet's raw rows with built-in privacy and cleanup logic.
- * 
- * @param {Array<Array<any>>} rows - Raw rows extracted from a sheet
- * @returns {Array<Array<any>>} - Cleaned rows with header
+ * Transforms raw worksheet data by sanitizing headers, anonymizing sensitive fields,
+ * converting DOB to age, and removing duplicate or irrelevant rows.
+ *
+ * @param {Array<Array<any>>} rows - Raw worksheet rows extracted using xlsx
+ * @returns {Array<Array<any>>} Cleaned and transformed 2D array
  */
 function transformSheet(rows) {
   if (!Array.isArray(rows) || rows.length === 0) return [];
 
-  const header = rows[0];
+  const rawHeader = rows[0];
   const cleaned = [];
   const columnMap = [];
 
-  // Map each header to its clean role
-  for (let i = 0; i < header.length; i++) {
-    const col = String(header[i] || '').trim().toLowerCase();
-    if (!col || col.startsWith('column')) {
-      columnMap.push(null); // skip unnamed columns
-    } else if (col === 'nhi') {
+  // Step 1: Normalize headers
+  for (let i = 0; i < rawHeader.length; i++) {
+    const rawCol = String(rawHeader[i] || '').trim().toLowerCase();
+
+    if (!rawCol || rawCol.startsWith('column')) {
+      columnMap.push(null); // Unnamed/empty column
+    } else if (rawCol === 'nhi') {
       columnMap.push('ID');
-    } else if (col === 'dob') {
+    } else if (rawCol === 'dob') {
       columnMap.push('Age');
-    } else if (['contact', 'address'].includes(col)) {
-      columnMap.push(null); // remove sensitive columns
+    } else if (['contact', 'address'].some(s => rawCol.includes(s))) {
+      columnMap.push(null); // Sensitive fields removed
     } else {
-      columnMap.push(header[i]); // preserve original name
+      columnMap.push(rawHeader[i]); // Keep original label
     }
   }
 
-  cleaned.push(columnMap.filter(Boolean)); // final header row
+  cleaned.push(columnMap.filter(Boolean)); // Final header
 
   const seen = new Set();
 
+  // Step 2: Clean and transform rows
   for (let i = 1; i < rows.length; i++) {
-    const row = rows[i];
-    if (!Array.isArray(row) || row.every(cell => !cell)) continue;
+    const rawRow = rows[i];
+    if (!Array.isArray(rawRow) || rawRow.every(cell => !cell)) continue;
 
-    const newRow = [];
+    const cleanedRow = [];
 
     for (let j = 0; j < columnMap.length; j++) {
       const label = columnMap[j];
       if (!label) continue;
 
-      const raw = row[j];
+      const cellValue = rawRow[j];
 
       if (label === 'ID') {
-        newRow.push(getAnonymizedId(String(raw)));
+        cleanedRow.push(getAnonymizedId(String(cellValue)));
       } else if (label === 'Age') {
-        newRow.push(calculateAgeFromDOB(raw));
+        cleanedRow.push(calculateAgeFromDOB(cellValue));
       } else {
-        newRow.push(raw);
+        cleanedRow.push(cellValue);
       }
     }
 
-    const rowKey = newRow.join('|');
-    if (!seen.has(rowKey)) {
-      cleaned.push(newRow);
-      seen.add(rowKey);
+    // Deduplicate by content
+    const key = cleanedRow.join('|');
+    if (!seen.has(key)) {
+      seen.add(key);
+      cleaned.push(cleanedRow);
     }
   }
 
@@ -71,16 +75,24 @@ function transformSheet(rows) {
 }
 
 /**
- * Converts a DOB value into age (years).
- * 
- * @param {*} dobRaw - Any raw date input
- * @returns {string|number} - Age if valid, otherwise empty string
+ * Converts a DOB input into age in years. Returns an empty string on failure or out-of-bound values.
+ *
+ * @param {*} dobRaw - Raw date input
+ * @returns {number|string} - Calculated age, or empty string if invalid
  */
 function calculateAgeFromDOB(dobRaw) {
   try {
-    const date = new Date(dobRaw);
-    if (isNaN(date)) return '';
-    const age = new Date().getFullYear() - date.getFullYear();
+    const dob = new Date(dobRaw);
+    if (isNaN(dob)) return '';
+
+    const now = new Date();
+    let age = now.getFullYear() - dob.getFullYear();
+
+    // Adjust if birthday hasn't occurred yet this year
+    const hasHadBirthday = (now.getMonth() > dob.getMonth()) ||
+      (now.getMonth() === dob.getMonth() && now.getDate() >= dob.getDate());
+    if (!hasHadBirthday) age--;
+
     return age >= 0 && age < 130 ? age : '';
   } catch {
     return '';

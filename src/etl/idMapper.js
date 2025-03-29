@@ -1,6 +1,6 @@
 /**
- * Version: 1.0.0
- * Description: Shared NHI → ID mapper for consistent anonymization across all sheets within a file.
+ * Version: 2.4.0
+ * Description: Centralized NHI-to-ID anonymization utility with resettable map and sequential ID generation.
  * Author: Ali Kahwaji
  */
 
@@ -8,24 +8,27 @@ const nhiToIdMap = new Map();
 let idCounter = 1;
 
 /**
- * Returns a consistent anonymized ID for a given NHI value.
- * Ensures the same patient gets the same anonymized ID across all sheets.
+ * Retrieves a consistent anonymized ID for a given NHI input.
+ * Ensures each unique NHI is mapped to a deterministic anonymized ID during the session.
  *
- * @param {string} nhi - The original NHI or patient identifier
- * @returns {string} - An anonymized ID (e.g., "ID-001")
+ * @param {string} nhi - The original National Health Identifier (or equivalent patient code)
+ * @returns {string} Anonymized ID (e.g., "ID-001"), or empty string for invalid input
  */
 function getAnonymizedId(nhi) {
-  if (!nhi || typeof nhi !== 'string') return '';
-  if (!nhiToIdMap.has(nhi)) {
-    const newId = `ID-${String(idCounter++).padStart(3, '0')}`;
-    nhiToIdMap.set(nhi, newId);
+  if (typeof nhi !== 'string' || nhi.trim() === '') return '';
+
+  const key = nhi.trim();
+  if (!nhiToIdMap.has(key)) {
+    const anonymizedId = `ID-${String(idCounter++).padStart(3, '0')}`;
+    nhiToIdMap.set(key, anonymizedId);
   }
-  return nhiToIdMap.get(nhi);
+
+  return nhiToIdMap.get(key);
 }
 
 /**
- * Resets the internal ID map and counter.
- * This should be called before processing a new file upload.
+ * Resets the internal mapping of NHI to anonymized ID and the counter.
+ * Invoked before each new ETL process to ensure unique session mapping.
  */
 function resetIdMap() {
   nhiToIdMap.clear();
@@ -34,5 +37,5 @@ function resetIdMap() {
 
 module.exports = {
   getAnonymizedId,
-  resetIdMap
+  resetIdMap,
 };
