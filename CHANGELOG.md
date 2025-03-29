@@ -3,6 +3,27 @@
 All notable changes to the Clinisync project will be documented in this file.
 
 ---
+## [2.5.0] - 2025-03-30
+
+### Added
+- 📦 Automated test fixture generator (`generateFixtures.js`)
+- 🧪 Edge-case tests for `transformSheet` and `cleanWorksheetData`
+- 🧪 End-to-end tests for `/upload` route including:
+  - Valid .xlsx uploads
+  - Invalid file format
+  - Missing uploads
+  - Oversized file uploads
+
+### Changed
+- ♻️ Test suite now regenerates fixtures before test runs
+- 🔁 Refactored `uploadRoute.test.js` for cleaner path resolution and isolation
+- ✅ Coverage increased to 93%+ across all modules
+
+### Fixed
+- 🐛 Fixture loading issues on Windows paths
+- 🐛 toThrow test message mismatch in `load.test.js`
+
+---
 
 ## [2.4.1] - 2025-03-26
 ### 🧹 Final Polish: Version File & Docs
