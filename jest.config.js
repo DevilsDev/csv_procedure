@@ -5,9 +5,9 @@
  */
 
 module.exports = {
-  testEnvironment: 'jsdom', // Enables DOM APIs for frontend tests
-  setupFiles: ['<rootDir>/jest.setup.js'], // Polyfills and global setup
-  testMatch: ['**/__tests__/**/*.test.js'], // All test files
+  testEnvironment: 'node',
+  setupFiles: ['<rootDir>/jest.setup.js'],
+  testMatch: ['**/__tests__/**/*.test.js'],
   moduleFileExtensions: ['js', 'json'],
   verbose: true,
   collectCoverage: true,
@@ -20,6 +20,4 @@ module.exports = {
   ],
   clearMocks: true,
   resetMocks: true,
-  globals: {},
-  transform: {},
 };

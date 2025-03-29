@@ -1,89 +1,50 @@
-# Logs
-logs
-*.log
-uploadLog.json
+/**
+ * Version: 2.5.0
+ * Description: Project configuration and documentation support file
+ * Author: Ali Kahwaji
+ * Last Updated: 2025-03-29
+ */
+
+
+# Node
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-lerna-debug.log*
-.pnpm-debug.log*
+package-lock.json
 
-# Diagnostic reports
-report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
-
-# Runtime data
-pids
+# Logs
+*.log
+logs/
 *.pid
-*.seed
-*.pid.lock
 
-# Build and coverage
-lib-cov
-coverage
-*.lcov
-.nyc_output
-
-# Temporary upload/output folders
-csvs/
+# Runtime
 uploads/
-__tests__/fixtures/
+csvs/
+uploadlog.json
 
-# Grunt intermediate storage
-.grunt
+# Coverage
+coverage/
+coverage-final.json
+clover.xml
 
-# Compiled binary addons
-build/Release
+# Build
+dist/
+build/
+public/sort-arrow-sprite.png
+public/pretty*.js
+public/base.css
 
-# Dependency directories
-node_modules/
-jspm_packages/
-
-# Caching
-.cache
-.parcel-cache
-.npm
-.eslintcache
-.stylelintcache
-.rpt2_cache/
-.rts2_cache_cjs/
-.rts2_cache_es/
-.rts2_cache_umd/
-
-# Environment files
+# Env
 .env
-.env.*
-!.env.example
-
-# TypeScript
-*.tsbuildinfo
+.env.local
+.env.development.local
+.env.test.local
+.env.example
 
 # VSCode
-.vscode-test
+.vscode/
 
-# Output of `npm pack`
-*.tgz
-
-# Yarn & PnP
-.yarn/cache
-.yarn/unplugged
-.yarn/build-state.yml
-.yarn/install-state.gz
-.pnp.*
-
-# Framework-specific
-.next
-out
-.nuxt
-dist
-.vuepress/dist
-.docusaurus
-.temp
-**/.vitepress/dist
-**/.vitepress/cache
-
-# Optional REPL history
-.node_repl_history
-
-# Ignore MacOS + system files
+# Others
 .DS_Store
-Thumbs.db
+.idea/

@@ -1,18 +1,18 @@
 /**
- * Version: 2.4.0
  * Sidebar configuration for Clinisync Docs
- * Author: Ali Kahwaji
- * Updated: Structured nav sections for About, API, Cleaning Rules, and Mission
  */
 
-/** @type {import('@docusaurus/plugin-content-docs').SidebarsConfig} */
-const sidebars = {
-  docs: [
+export default {
+  tutorialSidebar: [
+    {
+      type: 'doc',
+      id: 'intro',
+      label: 'Introduction',
+    },
     {
       type: 'category',
       label: 'About',
       items: [
-        'intro',
         'about/project-scope',
         'about/team',
         'about/technology',
@@ -22,21 +22,21 @@ const sidebars = {
       type: 'category',
       label: 'API',
       items: [
-        'api-upload',
         'api/cli-usage',
         'api/endpoints',
         'api/examples',
+        'upload', // ✅ No slash
       ],
     },
     {
       type: 'category',
       label: 'Cleaning Rules',
       items: [
-        'cleaning-rules',
-        'cleaning/fields',
-        'cleaning/sensitive-data',
         'cleaning/dob-to-age',
         'cleaning/duplicates',
+        'cleaning/fields',
+        'rules', // ✅ No slash
+        'cleaning/sensitive-data',
       ],
     },
     {
@@ -45,11 +45,9 @@ const sidebars = {
       items: [
         'mission/vision',
         'mission/etl-design',
-        'mission/security',
         'mission/scalability',
+        'mission/security',
       ],
     },
   ],
 };
-
-export default sidebars;
