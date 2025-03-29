@@ -4,6 +4,8 @@
  * Author: Ali Kahwaji
  */
 
+const path = require('path');
+
 module.exports = {
   testEnvironment: 'node',
   setupFiles: ['<rootDir>/jest.setup.js'],
@@ -12,7 +14,7 @@ module.exports = {
   verbose: true,
   collectCoverage: true,
   coverageDirectory: 'coverage',
-  globalSetup: './jest.globalSetup.js',
+  globalSetup: require('path').join(__dirname, 'jest.globalSetup.js'),
   coveragePathIgnorePatterns: [
     '/node_modules/',
     '/public/',
