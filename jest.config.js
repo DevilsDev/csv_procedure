@@ -1,6 +1,6 @@
 /**
- * Version: 1.1.0
- * Description: Central Jest configuration for csv_procedure project with environment setup
+ * Version: 1.2.0
+ * Description: Central Jest configuration for csv_procedure project with environment setup and global fixture setup
  * Author: Ali Kahwaji
  */
 
@@ -15,7 +15,7 @@ module.exports = {
   collectCoverage: true,
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov'],
-  globalSetup: './jest.global-setup.js', 
+  globalSetup: '<rootDir>/jest.globalSetup.js', // Corrected path (no hyphen)
   testPathIgnorePatterns: ['/node_modules/', '/fixtures/'],
   coveragePathIgnorePatterns: [
     '/node_modules/',
