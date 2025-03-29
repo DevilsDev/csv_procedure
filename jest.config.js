@@ -4,18 +4,19 @@
  * Author: Ali Kahwaji
  */
 
+const path = require('path');
+
 module.exports = {
+  rootDir: '.',
   testEnvironment: 'node',
-  rootDir: './',
-  globalSetup: '<rootDir>/jest.globalSetup.js', // ✅ Use <rootDir> prefix
   setupFiles: ['<rootDir>/jest.setup.js'],
+  globalSetup: path.resolve(__dirname, 'scripts/jest.globalSetup.js'), // ✅ fixed path
   testMatch: ['**/__tests__/**/*.test.js'],
+  testPathIgnorePatterns: ['/node_modules/', '/fixtures/'],
   moduleFileExtensions: ['js', 'json'],
-  verbose: true,
   collectCoverage: true,
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov'],
-  testPathIgnorePatterns: ['/node_modules/', '/fixtures/'],
   coveragePathIgnorePatterns: [
     '/node_modules/',
     '/public/',
@@ -25,4 +26,5 @@ module.exports = {
   ],
   clearMocks: true,
   resetMocks: true,
+  verbose: true,
 };
