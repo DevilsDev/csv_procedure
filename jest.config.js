@@ -15,7 +15,7 @@ module.exports = {
   collectCoverage: true,
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov'],
-  globalSetup: path.resolve(__dirname, 'jest.global-setup.js'), 
+  globalSetup: './jest.global-setup.js', 
   testPathIgnorePatterns: ['/node_modules/', '/fixtures/'],
   coveragePathIgnorePatterns: [
     '/node_modules/',
