@@ -10,10 +10,15 @@ jobs:
   build:
     name: Lint, Test, and Report Coverage
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: csv_procedure # Set the working directory
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          path: csv_procedure # Checkout repository into 'csv_procedure' directory
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -37,4 +42,4 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          token: ${{ secrets.CODECOV_TOKEN }} # 🔐 Make sure this is set in repo secrets
+          token: ${{ secrets.CODECOV_TOKEN }} # Ensure this is set in your repository secrets
