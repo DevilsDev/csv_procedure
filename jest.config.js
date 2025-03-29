@@ -10,7 +10,7 @@ module.exports = {
   rootDir: '.',
   testEnvironment: 'node',
   setupFiles: ['<rootDir>/jest.setup.js'],
-  globalSetup: path.resolve(__dirname, 'scripts/jest.globalSetup.js'), // ✅ fixed path
+  globalSetup: '<rootDir>/scripts/jest.globalSetup.js', // fixed path
   testMatch: ['**/__tests__/**/*.test.js'],
   testPathIgnorePatterns: ['/node_modules/', '/fixtures/'],
   moduleFileExtensions: ['js', 'json'],
