@@ -2,13 +2,13 @@ name: Clinisync CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
-    name: Lint, Test, and Report Coverage
+    name: Lint, Setup, Test, and Upload Coverage
     runs-on: ubuntu-latest
 
     steps:
@@ -20,27 +20,17 @@ jobs:
         with:
           node-version: 18
 
-      - name: 🔍 Show current directory and structure
-        run: |
-          pwd
-          ls -R
-        
       - name: 📦 Install dependencies
-        run: npm install
+        run: npm ci
+
+      - name: 🧪 Run setup (fixtures and dirs)
+        run: npm run setup
 
       - name: 🧹 Run linter
-        run: npx eslint src/ --ext .js
-
-      - name: 🧪 Verify required fixture files
-        run: |
-          test -f "__tests__/fixtures/case-mix-sample.xlsx"
-          test -f "__tests__/fixtures/invalid.txt"
-
-      - name: 🛠️ Generate test fixtures
-        run: node scripts/jest.globalSetup.js
+        run: npm run lint
 
       - name: ✅ Run tests with coverage
-        run: npm test
+        run: npm run test:ci
 
       - name: 📊 Upload coverage to Codecov
         uses: codecov/codecov-action@v3

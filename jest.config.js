@@ -1,30 +1,40 @@
 /**
- * Version: 1.2.1
- * Description: Central Jest configuration for csv_procedure with global setup
+ * Script: setup.js
+ * Purpose: Prepares test environment (fixtures, folders) before test or CI
  * Author: Ali Kahwaji
+ * Version: 1.0.0
  */
 
 const path = require('path');
+const fs = require('fs');
+const { generateAllFixtures } = require('../src/utils/generateFixtures');
 
-module.exports = {
-  rootDir: '.',
-  testEnvironment: 'node',
-  setupFiles: ['<rootDir>/jest.setup.js'],
-  //globalSetup: '<rootDir>/scripts/jest.globalSetup.js', // fixed path
-  testMatch: ['**/__tests__/**/*.test.js'],
-  testPathIgnorePatterns: ['/node_modules/', '/fixtures/'],
-  moduleFileExtensions: ['js', 'json'],
-  collectCoverage: true,
-  coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov'],
-  coveragePathIgnorePatterns: [
-    '/node_modules/',
-    '/public/',
-    '/uploads/',
-    '/csvs/',
-    '__tests__/fixtures/',
-  ],
-  clearMocks: true,
-  resetMocks: true,
-  verbose: true,
-};
+function ensureFoldersExist() {
+  const requiredDirs = ['uploads', 'csvs'];
+
+  requiredDirs.forEach((dir) => {
+    const fullPath = path.join(__dirname, '..', dir);
+    if (!fs.existsSync(fullPath)) {
+      fs.mkdirSync(fullPath, { recursive: true });
+      console.log(`📁 Created missing folder: ${fullPath}`);
+    } else {
+      console.log(`✅ Folder exists: ${fullPath}`);
+    }
+  });
+}
+
+function main() {
+  console.log('⚙️  Running setup script...');
+
+  ensureFoldersExist();
+  generateAllFixtures();
+
+  console.log('✅ Setup complete: directories ensured & fixtures generated.');
+}
+
+// Only run when executed directly
+if (require.main === module) {
+  main();
+}
+
+module.exports = { main };
