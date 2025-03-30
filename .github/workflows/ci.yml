@@ -2,37 +2,50 @@ name: Clinisync CI
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
   build:
-    name: Lint, Setup, Test, and Upload Coverage
+    name: Lint, Test, and Report Coverage
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: 🧰 Set up Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      - name: 📦 Install dependencies
-        run: npm ci
+      - name: Install dependencies
+        run: npm install
 
-      - name: 🧪 Run setup (fixtures and dirs)
-        run: npm run setup
-
-      - name: 🧹 Run linter
+      - name: Lint source code
         run: npm run lint
 
-      - name: ✅ Run tests with coverage
-        run: npm run test:ci
+      - name: 🔍 Debug: print current directory and files
+        run: |
+          echo "📁 Current directory: $(pwd)"
+          ls -al
+
+      - name: 📦 Run project setup script (folders + fixtures)
+        run: node scripts/setup.js
+        working-directory: ${{ github.workspace }}
+
+      - name: ✅ Verify test fixture files
+        run: |
+          test -f "__tests__/fixtures/case-mix-sample.xlsx"
+          test -f "__tests__/fixtures/invalid.txt"
+        working-directory: ${{ github.workspace }}
+
+      - name: 🧪 Run tests with coverage
+        run: npm test
+        working-directory: ${{ github.workspace }}
 
       - name: 📊 Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ secrets.CODECOV_TOKEN }} # Optional if repo is public
