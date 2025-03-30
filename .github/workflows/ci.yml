@@ -12,35 +12,39 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: 📥 Checkout repository
         uses: actions/checkout@v3
-        # ❌ REMOVE this line to stop double nesting:
-        # with:
-        #   path: csv_procedure
 
-      - name: Set up Node.js
+      - name: 🧰 Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: npm install
 
-      - name: Run linter
+      - name: 🧹 Run linter
         run: npx eslint src/ --ext .js
 
-      - name: Verify required test fixtures
+      - name: 🧪 Verify required fixture files
         run: |
           test -f "__tests__/fixtures/case-mix-sample.xlsx"
           test -f "__tests__/fixtures/invalid.txt"
-      
-      - name: Generate test fixtures
+
+      - name: 🔍 Debug workspace structure
+        run: |
+          echo "Current directory:"
+          pwd
+          echo "Listing files:"
+          ls -R .
+
+      - name: 🛠️ Generate test fixtures
         run: node scripts/jest.globalSetup.js
 
-      - name: Run tests with coverage
+      - name: ✅ Run tests with coverage
         run: npm test
 
-      - name: Upload coverage to Codecov
+      - name: 📊 Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
