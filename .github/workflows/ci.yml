@@ -12,32 +12,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: ✅ Checkout repository
+      - name: ⬇️ Checkout repository
         uses: actions/checkout@v3
-
-      - name: 🔧 Set up Node.js
-        uses: actions/setup-node@v3
         with:
-          node-version: 18
+          path: csv_procedure  # 👈 Force folder name to match
+
+      - name: 🟢 Set working directory
+        working-directory: ./csv_procedure
+        run: echo "👉 Using working directory: $(pwd)"
 
       - name: 📦 Install dependencies
+        working-directory: ./csv_procedure
         run: npm install
 
-      - name: 🧼 Lint source code
+      - name: 🧼 Lint code
+        working-directory: ./csv_procedure
         run: npm run lint
 
-      - name: 🛠️ Setup project (folders + fixtures)
+      - name: 🛠️ Project setup (folders + fixtures)
+        working-directory: ./csv_procedure
         run: node scripts/setup.js
 
-      - name: ✅ Verify test fixture files
+      - name: 🔍 Verify test fixture files
+        working-directory: ./csv_procedure
         run: |
           test -f "__tests__/fixtures/case-mix-sample.xlsx"
           test -f "__tests__/fixtures/invalid.txt"
 
       - name: 🧪 Run tests with coverage
+        working-directory: ./csv_procedure
         run: npm test
 
       - name: 📊 Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          token: ${{ secrets.CODECOV_TOKEN }} # Optional for public repos
+          token: ${{ secrets.CODECOV_TOKEN }}  # Add in repo secrets
