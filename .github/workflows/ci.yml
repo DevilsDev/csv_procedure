@@ -2,9 +2,9 @@ name: Clinisync CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
@@ -15,6 +15,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: "Debug: print working directory and list files"
+        run: |
+          echo "Current working directory: $(pwd)"
+          ls -la
+
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
@@ -23,29 +28,16 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Lint source code
+      - name: Run setup script
+        run: node ./scripts/setup.js
+
+      - name: Lint source files
         run: npm run lint
 
-      - name: "🔍 Debug: print current directory and files"
-        run: |
-          echo "📁 Current directory: $(pwd)"
-          ls -al
-
-      - name: 📦 Run project setup script (folders + fixtures)
-        run: node scripts/setup.js
-        working-directory: ${{ github.workspace }}
-
-      - name: ✅ Verify test fixture files
-        run: |
-          test -f "__tests__/fixtures/case-mix-sample.xlsx"
-          test -f "__tests__/fixtures/invalid.txt"
-        working-directory: ${{ github.workspace }}
-
-      - name: 🧪 Run tests with coverage
+      - name: Run tests with coverage
         run: npm test
-        working-directory: ${{ github.workspace }}
 
-      - name: 📊 Upload coverage to Codecov
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          token: ${{ secrets.CODECOV_TOKEN }} # Optional if repo is public
+          token: ${{ secrets.CODECOV_TOKEN }}
