@@ -33,6 +33,9 @@ jobs:
         run: |
           test -f "__tests__/fixtures/case-mix-sample.xlsx"
           test -f "__tests__/fixtures/invalid.txt"
+      
+      - name: Generate test fixtures
+        run: node scripts/jest.globalSetup.js
 
       - name: Run tests with coverage
         run: npm test
