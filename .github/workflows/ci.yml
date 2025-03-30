@@ -19,7 +19,7 @@ jobs:
 
       - name: 🟢 Set working directory
         working-directory: ./csv_procedure
-        run: echo "👉 Using working directory: $(pwd)"
+        run: "echo 👉 Using working directory: $(pwd)"
 
       - name: 📦 Install dependencies
         working-directory: ./csv_procedure
