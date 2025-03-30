@@ -12,26 +12,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: ✅ Checkout repository at root
         uses: actions/checkout@v3
+        with:
+          path: .
 
-      - name: Set up Node.js
+      - name: 🔧 Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: npm install
 
-      - name: Lint source code
+      - name: 🧼 Lint source code
         run: npm run lint
 
-      - name: "🔍 Debug: print working directory and list files"
-        run: |
-          echo "📁 Current directory: $(pwd)"
-          ls -al
-
-      - name: "📦 Run project setup script (folders + fixtures)"
+      - name: 📁 Project setup (folders + fixtures)
         run: node scripts/setup.js
 
       - name: ✅ Verify test fixture files
@@ -45,4 +42,4 @@ jobs:
       - name: 📊 Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          token: ${{ secrets.CODECOV_TOKEN }} # Only needed if private repo
+          token: ${{ secrets.CODECOV_TOKEN }} # Optional for public repos
