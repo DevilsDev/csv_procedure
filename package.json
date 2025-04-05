@@ -12,16 +12,19 @@
   ],
   "description": "",
   "main": "src/app.js",
- "scripts": {
-  "start": "node server.js",
-  "dev": "nodemon server.js",
-  "lint": "npx eslint src/ --ext .js",
-  "setup": "node scripts/setup.js",
-  "test": "npm run setup && jest --coverage",
-  "test:ci": "npm run setup && jest --coverage --ci",
-  "prepare": "husky install",
-  "generate:fixtures": "node src/utils/generateFixtures.js"
-},
+  "scripts": {
+    "start": "node server.js",
+    "ci": "node scripts/ci-runner.js",
+    "dev": "nodemon server.js",
+    "lint": "npx eslint src/ --ext .js",
+    "setup": "node scripts/setup.js",
+    "test": "npm run setup && jest --coverage",
+    "test:ci": "npm run setup && jest --coverage --ci",
+    "prepare": "husky install",
+    "generate:fixtures": "node src/utils/generateFixtures.js",
+    "upload:coverage": "codecov -f coverage/lcov.info --disable=gcov",
+    "release": "npm run ci && npm version patch -m \"🔖 Release v%s\" && git push && git push --tags"
+  },
   "repository": {
     "type": "git, module",
     "url": "git+https://github.com/DevilsDev/csv_procedure.git"
@@ -41,6 +44,7 @@
     "clinisync": "./bin/clinisync.js"
   },
   "dependencies": {
+    "chalk": "^5.4.1",
     "detect-port": "^2.1.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
@@ -50,8 +54,11 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.23.0",
+    "axios": "^1.8.4",
+    "codecov": "^3.1.0",
+    "cross-env": "^7.0.3",
     "eslint": "^9.23.0",
-    "husky": "^9.1.7",
+    "husky": "^8.0.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "nodemon": "^3.1.9",
@@ -59,4 +66,3 @@
     "util": "^0.12.5"
   }
 }
-
