@@ -1,6 +1,6 @@
 {
   "name": "csv_procedure",
-  "version": "2.5.1",
+  "version": "2.5.2",
   "files": [
     "src/",
     "public/",
