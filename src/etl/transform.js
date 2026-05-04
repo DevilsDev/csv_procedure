@@ -1,6 +1,6 @@
 /**
  * Version: 2.4.0
- * Description: Applies anonymization and data cleaning rules to a spreadsheet sheet, including NHI→ID mapping and DOB→Age transformation.
+ * Description: Applies anonymization and data cleaning rules to a spreadsheet sheet, including NHI?ID mapping and DOB?Age transformation.
  * Author: Ali Kahwaji
  */
 
@@ -20,28 +20,26 @@ function transformSheet(rows) {
   const cleaned = [];
   const columnMap = [];
 
-  // Step 1: Normalize headers
   for (let i = 0; i < rawHeader.length; i++) {
     const rawCol = String(rawHeader[i] || '').trim().toLowerCase();
 
     if (!rawCol || rawCol.startsWith('column')) {
-      columnMap.push(null); // Unnamed/empty column
+      columnMap.push(null);
     } else if (rawCol === 'nhi') {
       columnMap.push('ID');
     } else if (rawCol === 'dob') {
       columnMap.push('Age');
     } else if (['contact', 'address'].some(s => rawCol.includes(s))) {
-      columnMap.push(null); // Sensitive fields removed
+      columnMap.push(null);
     } else {
-      columnMap.push(rawHeader[i]); // Keep original label
+      columnMap.push(rawHeader[i]);
     }
   }
 
-  cleaned.push(columnMap.filter(Boolean)); // Final header
+  cleaned.push(columnMap.filter(Boolean));
 
   const seen = new Set();
 
-  // Step 2: Clean and transform rows
   for (let i = 1; i < rows.length; i++) {
     const rawRow = rows[i];
     if (!Array.isArray(rawRow) || rawRow.every(cell => !cell)) continue;
@@ -55,7 +53,7 @@ function transformSheet(rows) {
       const cellValue = rawRow[j];
 
       if (label === 'ID') {
-        cleanedRow.push(getAnonymizedId(String(cellValue)));
+        cleanedRow.push(typeof cellValue === 'string' ? getAnonymizedId(cellValue) : '');
       } else if (label === 'Age') {
         cleanedRow.push(calculateAgeFromDOB(cellValue));
       } else {
@@ -63,7 +61,6 @@ function transformSheet(rows) {
       }
     }
 
-    // Deduplicate by content
     const key = cleanedRow.join('|');
     if (!seen.has(key)) {
       seen.add(key);
@@ -74,12 +71,6 @@ function transformSheet(rows) {
   return cleaned;
 }
 
-/**
- * Converts a DOB input into age in years. Returns an empty string on failure or out-of-bound values.
- *
- * @param {*} dobRaw - Raw date input
- * @returns {number|string} - Calculated age, or empty string if invalid
- */
 function calculateAgeFromDOB(dobRaw) {
   try {
     const dob = new Date(dobRaw);
@@ -88,7 +79,6 @@ function calculateAgeFromDOB(dobRaw) {
     const now = new Date();
     let age = now.getFullYear() - dob.getFullYear();
 
-    // Adjust if birthday hasn't occurred yet this year
     const hasHadBirthday = (now.getMonth() > dob.getMonth()) ||
       (now.getMonth() === dob.getMonth() && now.getDate() >= dob.getDate());
     if (!hasHadBirthday) age--;

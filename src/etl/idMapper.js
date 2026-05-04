@@ -18,6 +18,7 @@ function getAnonymizedId(nhi) {
   if (typeof nhi !== 'string' || nhi.trim() === '') return '';
 
   const key = nhi.trim();
+
   if (!nhiToIdMap.has(key)) {
     const anonymizedId = `ID-${String(idCounter++).padStart(3, '0')}`;
     nhiToIdMap.set(key, anonymizedId);
