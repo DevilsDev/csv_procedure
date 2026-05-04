@@ -73,6 +73,24 @@ describe('POST /upload', () => {
       missingNhiCount: 0,
     });
     expect(res.body.manifest).toMatch(/^manifest-case_mix_sample-\d+-\d+\.json$/);
+    expect(res.body.sheets).toEqual([
+      {
+        sheetName: 'Sheet1',
+        fileName: res.body.files[0],
+        rowsProcessed: 2,
+        duplicatesRemoved: 0,
+        invalidDobCount: 0,
+        missingNhiCount: 0,
+      },
+      {
+        sheetName: 'Sheet2',
+        fileName: res.body.files[1],
+        rowsProcessed: 2,
+        duplicatesRemoved: 0,
+        invalidDobCount: 0,
+        missingNhiCount: 0,
+      },
+    ]);
     expect(getNewUploadFiles(beforeFiles)).toEqual([]);
 
     const newCsvFiles = getNewCsvFiles(beforeCsvFiles);

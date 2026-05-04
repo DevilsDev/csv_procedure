@@ -92,6 +92,7 @@ router.post('/', async (req, res) => {
       message: 'Upload and transformation completed successfully.',
       files: outputFiles,
       manifest: manifestFile,
+      sheets: sheetOutputs,
       ...summary,
     });
   } catch (error) {
