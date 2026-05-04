@@ -8,8 +8,8 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const extract = require('../etl/extract');
-const { transformSheet } = require('../etl/transform');
-const { writeCsvOutput } = require('../etl/load');
+const { transformSheetWithStats } = require('../etl/transform');
+const { writeCsvOutput, writeManifestOutput } = require('../etl/load');
 const { resetIdMap } = require('../etl/idMapper');
 
 const router = express.Router();
@@ -53,16 +53,46 @@ router.post('/', async (req, res) => {
     const baseName = path.parse(file.originalname).name;
     const sheets = extract.extractSheets(file.path);
     const outputFiles = [];
+    const sheetOutputs = [];
+    const summary = {
+      sheetsProcessed: 0,
+      rowsProcessed: 0,
+      duplicatesRemoved: 0,
+      invalidDobCount: 0,
+      missingNhiCount: 0,
+    };
 
     for (const sheet of sheets) {
-      const cleaned = transformSheet(sheet.rows);
-      const outputPath = writeCsvOutput(baseName, sheet.name, cleaned);
-      outputFiles.push(path.basename(outputPath));
+      const result = transformSheetWithStats(sheet.rows);
+      const outputPath = writeCsvOutput(baseName, sheet.name, result.rows);
+      const fileName = path.basename(outputPath);
+      outputFiles.push(fileName);
+      sheetOutputs.push({
+        sheetName: sheet.name,
+        fileName,
+        ...result.stats,
+      });
+      summary.sheetsProcessed += 1;
+      summary.rowsProcessed += result.stats.rowsProcessed;
+      summary.duplicatesRemoved += result.stats.duplicatesRemoved;
+      summary.invalidDobCount += result.stats.invalidDobCount;
+      summary.missingNhiCount += result.stats.missingNhiCount;
     }
+
+    const manifestPath = writeManifestOutput(baseName, {
+      sourceFileName: file.originalname,
+      generatedAt: new Date().toISOString(),
+      ...summary,
+      files: outputFiles,
+      sheets: sheetOutputs,
+    });
+    const manifestFile = path.basename(manifestPath);
 
     return res.status(200).json({
       message: 'Upload and transformation completed successfully.',
-      files: outputFiles
+      files: outputFiles,
+      manifest: manifestFile,
+      ...summary,
     });
   } catch (error) {
     console.error('ETL Error:', error.message);

@@ -22,6 +22,7 @@ describe('POST /upload', () => {
   const validExcelPath = path.join(fixtureDir, 'case-mix-sample.xlsx');
   const invalidTxtPath = path.join(fixtureDir, 'invalid.txt');
   const uploadsDir = path.resolve('uploads');
+  const csvDir = path.resolve('csvs');
 
   function listUploadFiles() {
     return new Set(fs.readdirSync(uploadsDir));
@@ -29,6 +30,14 @@ describe('POST /upload', () => {
 
   function getNewUploadFiles(beforeFiles) {
     return fs.readdirSync(uploadsDir).filter(fileName => !beforeFiles.has(fileName));
+  }
+
+  function listCsvFiles() {
+    return new Set(fs.readdirSync(csvDir));
+  }
+
+  function getNewCsvFiles(beforeFiles) {
+    return fs.readdirSync(csvDir).filter(fileName => !beforeFiles.has(fileName));
   }
 
   beforeAll(() => {
@@ -45,6 +54,7 @@ describe('POST /upload', () => {
 
   it('should return JSON with output CSV files for valid Excel upload', async () => {
     const beforeFiles = listUploadFiles();
+    const beforeCsvFiles = listCsvFiles();
 
     const res = await request(app)
       .post('/upload')
@@ -55,7 +65,43 @@ describe('POST /upload', () => {
     expect(res.body).toHaveProperty('files');
     expect(Array.isArray(res.body.files)).toBe(true);
     expect(res.body.files.length).toBeGreaterThan(0);
+    expect(res.body).toMatchObject({
+      sheetsProcessed: 2,
+      rowsProcessed: 4,
+      duplicatesRemoved: 0,
+      invalidDobCount: 0,
+      missingNhiCount: 0,
+    });
+    expect(res.body.manifest).toMatch(/^manifest-case_mix_sample-\d+-\d+\.json$/);
     expect(getNewUploadFiles(beforeFiles)).toEqual([]);
+
+    const newCsvFiles = getNewCsvFiles(beforeCsvFiles);
+    expect(newCsvFiles).toEqual(expect.arrayContaining([...res.body.files, res.body.manifest]));
+
+    const manifestPath = path.join(csvDir, res.body.manifest);
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+
+    expect(manifest).toMatchObject({
+      sourceFileName: 'case-mix-sample.xlsx',
+      sheetsProcessed: 2,
+      rowsProcessed: 4,
+      duplicatesRemoved: 0,
+      invalidDobCount: 0,
+      missingNhiCount: 0,
+      files: res.body.files,
+    });
+    expect(manifest.sheets).toEqual([
+      expect.objectContaining({
+        sheetName: 'Sheet1',
+        fileName: res.body.files[0],
+        rowsProcessed: 2,
+      }),
+      expect.objectContaining({
+        sheetName: 'Sheet2',
+        fileName: res.body.files[1],
+        rowsProcessed: 2,
+      }),
+    ]);
   });
 
   it('should reject unsupported file types (e.g., .txt)', async () => {

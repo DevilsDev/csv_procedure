@@ -4,7 +4,7 @@
  * Author: Ali Kahwaji
  */
 
-const { transformSheet } = require('../src/etl/transform');
+const { transformSheet, transformSheetWithStats } = require('../src/etl/transform');
 const { resetIdMap } = require('../src/etl/idMapper');
 
 describe('transformSheet()', () => {
@@ -76,5 +76,26 @@ describe('transformSheet()', () => {
     expect(result[0]).toEqual(['ID', 'Age', 'Weight']);
     expect(result[1][0]).toBe('');
     expect(result[2][0]).toBe('ID-001');
+  });
+
+  it('should report row-level summary stats', () => {
+    const input = [
+      ['NHI', 'DOB', 'Weight'],
+      ['AB123', '1990-01-01', 72],
+      ['AB123', '1990-01-01', 72],
+      ['', 'not-a-date', 70],
+      [undefined, '2001-02-03', 65],
+      ['', '', ''],
+    ];
+
+    const result = transformSheetWithStats(input);
+
+    expect(result.stats).toEqual({
+      rowsProcessed: 4,
+      duplicatesRemoved: 1,
+      invalidDobCount: 1,
+      missingNhiCount: 2,
+    });
+    expect(result.rows.length).toBe(4);
   });
 });

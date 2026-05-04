@@ -6,19 +6,39 @@
 
 const { getAnonymizedId } = require('./idMapper');
 
+function getEmptyStats() {
+  return {
+    rowsProcessed: 0,
+    duplicatesRemoved: 0,
+    invalidDobCount: 0,
+    missingNhiCount: 0,
+  };
+}
+
+function isMissingNhi(value) {
+  return typeof value !== 'string' || value.trim() === '';
+}
+
+function isBlankCell(value) {
+  return value === null || value === undefined || value === '';
+}
+
 /**
  * Transforms raw worksheet data by sanitizing headers, anonymizing sensitive fields,
  * converting DOB to age, and removing duplicate or irrelevant rows.
  *
  * @param {Array<Array<any>>} rows - Raw worksheet rows extracted using xlsx
- * @returns {Array<Array<any>>} Cleaned and transformed 2D array
+ * @returns {{ rows: Array<Array<any>>, stats: { rowsProcessed: number, duplicatesRemoved: number, invalidDobCount: number, missingNhiCount: number } }}
  */
-function transformSheet(rows) {
-  if (!Array.isArray(rows) || rows.length === 0) return [];
+function transformSheetWithStats(rows) {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return { rows: [], stats: getEmptyStats() };
+  }
 
   const rawHeader = rows[0];
   const cleaned = [];
   const columnMap = [];
+  const stats = getEmptyStats();
 
   for (let i = 0; i < rawHeader.length; i++) {
     const rawCol = String(rawHeader[i] || '').trim().toLowerCase();
@@ -44,6 +64,7 @@ function transformSheet(rows) {
     const rawRow = rows[i];
     if (!Array.isArray(rawRow) || rawRow.every(cell => !cell)) continue;
 
+    stats.rowsProcessed += 1;
     const cleanedRow = [];
 
     for (let j = 0; j < columnMap.length; j++) {
@@ -53,9 +74,18 @@ function transformSheet(rows) {
       const cellValue = rawRow[j];
 
       if (label === 'ID') {
-        cleanedRow.push(typeof cellValue === 'string' ? getAnonymizedId(cellValue) : '');
+        if (isMissingNhi(cellValue)) {
+          stats.missingNhiCount += 1;
+          cleanedRow.push('');
+        } else {
+          cleanedRow.push(getAnonymizedId(cellValue));
+        }
       } else if (label === 'Age') {
-        cleanedRow.push(calculateAgeFromDOB(cellValue));
+        const age = calculateAgeFromDOB(cellValue);
+        if (age === '' && !isBlankCell(cellValue)) {
+          stats.invalidDobCount += 1;
+        }
+        cleanedRow.push(age);
       } else {
         cleanedRow.push(cellValue);
       }
@@ -65,10 +95,20 @@ function transformSheet(rows) {
     if (!seen.has(key)) {
       seen.add(key);
       cleaned.push(cleanedRow);
+    } else {
+      stats.duplicatesRemoved += 1;
     }
   }
 
-  return cleaned;
+  return { rows: cleaned, stats };
+}
+
+/**
+ * @param {Array<Array<any>>} rows
+ * @returns {Array<Array<any>>}
+ */
+function transformSheet(rows) {
+  return transformSheetWithStats(rows).rows;
 }
 
 function calculateAgeFromDOB(dobRaw) {
@@ -89,4 +129,4 @@ function calculateAgeFromDOB(dobRaw) {
   }
 }
 
-module.exports = { transformSheet };
+module.exports = { transformSheet, transformSheetWithStats };

@@ -4,6 +4,7 @@
  * Author: Ali Kahwaji
  */
 
+const fs = require('fs');
 const path = require('path');
 const xlsx = require('xlsx');
 
@@ -20,6 +21,19 @@ function sanitizeName(value, fallback) {
   return sanitized || fallback;
 }
 
+function nextOutputToken(baseName, suffix) {
+  const safeBase = sanitizeName(baseName, 'workbook');
+  const timestamp = Date.now();
+  writeCounter += 1;
+
+  return {
+    safeBase,
+    timestamp,
+    counter: writeCounter,
+    filename: `${suffix}-${safeBase}-${timestamp}-${writeCounter}`,
+  };
+}
+
 /**
  * Writes structured worksheet data into a CSV file.
  *
@@ -34,11 +48,9 @@ function writeCsvOutput(baseName, sheetName, data) {
     throw new Error(`? No data provided for sheet: "${sheetName}"`);
   }
 
-  const safeBase = sanitizeName(baseName, 'workbook');
   const safeSheet = sanitizeName(sheetName, 'sheet');
-  const timestamp = Date.now();
-  writeCounter += 1;
-  const filename = `converted-${safeBase}-${safeSheet}-${timestamp}-${writeCounter}.csv`;
+  const token = nextOutputToken(baseName, 'converted');
+  const filename = `${token.filename}-${safeSheet}.csv`;
   const outputPath = path.join(__dirname, '../../csvs', filename);
 
   try {
@@ -53,4 +65,18 @@ function writeCsvOutput(baseName, sheetName, data) {
   return outputPath;
 }
 
-module.exports = { writeCsvOutput };
+function writeManifestOutput(baseName, manifestData) {
+  const token = nextOutputToken(baseName, 'manifest');
+  const filename = `${token.filename}.json`;
+  const outputPath = path.join(__dirname, '../../csvs', filename);
+
+  try {
+    fs.writeFileSync(outputPath, JSON.stringify(manifestData, null, 2));
+  } catch (err) {
+    throw new Error(`? Failed to write manifest file: ${err.message}`);
+  }
+
+  return outputPath;
+}
+
+module.exports = { writeCsvOutput, writeManifestOutput };
