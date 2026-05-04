@@ -14,9 +14,6 @@ const { resetIdMap } = require('../etl/idMapper');
 
 const router = express.Router();
 
-const ALLOWED_EXTENSIONS = ['.xlsx', '.xls', '.ods'];
-const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
-
 function removeUploadedFile(filePath) {
   if (!filePath) {
     return;
@@ -37,15 +34,6 @@ router.post('/', async (req, res) => {
   try {
     if (!file) {
       return res.status(400).json({ error: 'No file uploaded.' });
-    }
-
-    const extension = path.extname(file.originalname).toLowerCase();
-    if (!ALLOWED_EXTENSIONS.includes(extension)) {
-      return res.status(400).json({ error: 'Unsupported file format.' });
-    }
-
-    if (file.size > MAX_SIZE_BYTES) {
-      return res.status(400).json({ error: 'File exceeds the maximum size of 5MB.' });
     }
 
     resetIdMap();

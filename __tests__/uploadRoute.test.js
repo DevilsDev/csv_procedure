@@ -20,7 +20,6 @@ app.use('/upload', upload.single('excel'), fileUploadRoute);
 describe('POST /upload', () => {
   const fixtureDir = path.resolve(__dirname, 'fixtures');
   const validExcelPath = path.join(fixtureDir, 'case-mix-sample.xlsx');
-  const invalidTxtPath = path.join(fixtureDir, 'invalid.txt');
   const uploadsDir = path.resolve('uploads');
   const csvDir = path.resolve('csvs');
 
@@ -45,10 +44,6 @@ describe('POST /upload', () => {
 
     if (!fs.existsSync(validExcelPath)) {
       throw new Error('Valid fixture missing: case-mix-sample.xlsx');
-    }
-
-    if (!fs.existsSync(invalidTxtPath)) {
-      throw new Error('Invalid fixture missing: invalid.txt');
     }
   });
 
@@ -122,32 +117,9 @@ describe('POST /upload', () => {
     ]);
   });
 
-  it('should reject unsupported file types (e.g., .txt)', async () => {
-    const res = await request(app)
-      .post('/upload')
-      .attach('excel', invalidTxtPath);
-
-    expect(res.statusCode).toBe(400);
-    expect(res.text.toLowerCase()).toMatch(/unsupported file format/);
-  });
-
   it('should reject missing file upload', async () => {
     const res = await request(app).post('/upload');
     expect(res.statusCode).toBe(400);
     expect(res.text.toLowerCase()).toMatch(/no file uploaded/);
-  });
-
-  it('should reject oversized file (> 5MB)', async () => {
-    const oversizedBuffer = Buffer.alloc(6 * 1024 * 1024);
-    const res = await request(app)
-      .post('/upload')
-      .attach('excel', oversizedBuffer, {
-        filename: 'oversized.xlsx',
-        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      });
-
-    expect(res.statusCode).toBe(400);
-    const errorMsg = res.text || JSON.stringify(res.body);
-    expect(errorMsg.toLowerCase()).toMatch(/file exceeds the maximum size/i);
   });
 });
