@@ -13,8 +13,9 @@ require('dotenv').config();
 const fileUploadRoute = require('./routes/fileUpload');
 
 const app = express();
+const ALLOWED_EXTENSIONS = new Set(['.xlsx', '.xls', '.ods']);
+const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
-// Create essential directories if missing
 ['uploads', 'csvs'].forEach(dir => {
   const dirPath = path.resolve(__dirname, '..', dir);
   if (!fs.existsSync(dirPath)) {
@@ -22,10 +23,8 @@ const app = express();
   }
 });
 
-// Serve static assets from /public directory
 app.use(express.static(path.resolve(__dirname, '../public')));
 
-// Configure Multer for Excel file uploads
 const storage = multer.diskStorage({
   destination: 'uploads/',
   filename: (req, file, callback) => {
@@ -34,15 +33,47 @@ const storage = multer.diskStorage({
     callback(null, timestampedName);
   }
 });
-const upload = multer({ storage });
 
-// File upload route
-app.use('/upload', upload.single('excel'), fileUploadRoute);
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: MAX_SIZE_BYTES
+  },
+  fileFilter: (req, file, callback) => {
+    const extension = path.extname(file.originalname).toLowerCase();
 
-// Centralized error handling middleware
+    if (!ALLOWED_EXTENSIONS.has(extension)) {
+      req.fileValidationError = 'Unsupported file format.';
+      return callback(null, false);
+    }
+
+    return callback(null, true);
+  }
+});
+
+function uploadExcel(req, res, next) {
+  upload.single('excel')(req, res, (err) => {
+    if (err) {
+      return next(err);
+    }
+
+    if (req.fileValidationError) {
+      return res.status(400).json({ error: req.fileValidationError });
+    }
+
+    return next();
+  });
+}
+
+app.use('/upload', uploadExcel, fileUploadRoute);
+
 app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
-  console.error('❌ Server Error:', err.message);
-  res.status(500).send('Something went wrong on the server.');
+  if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({ error: 'File exceeds the maximum size of 5MB.' });
+  }
+
+  console.error('Server Error:', err.message);
+  return res.status(500).send('Something went wrong on the server.');
 });
 
 module.exports = app;
