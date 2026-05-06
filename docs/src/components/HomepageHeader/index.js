@@ -24,7 +24,7 @@ export default function HomepageHeader() {
               <p className="hero__subtitle">
                 Everything you need to clean, convert, and secure clinical Excel data across multiple sheets.
               </p>
-              <div className={styles.buttons}>
+              <div className={styles.heroButtons}>
                 <Link className="button button--primary button--lg" to="/about">
                   About
                 </Link>
@@ -35,13 +35,6 @@ export default function HomepageHeader() {
                   Cleaning Rules
                 </Link>
               </div>
-            </div>
-            <div className={styles.heroImage}>
-              <img
-                src="/img/clinisync-illustration.svg"
-                alt="Clinisync ETL Illustration"
-                className={styles.imageResponsive}
-              />
             </div>
           </div>
         </div>
