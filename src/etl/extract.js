@@ -16,7 +16,7 @@ const xlsx = require('xlsx');
  */
 function extractSheets(filePath) {
   if (!filePath || typeof filePath !== 'string' || !fs.existsSync(filePath)) {
-    throw new Error('❌ Invalid or missing file path provided to extractSheets().');
+    throw new Error('Invalid or missing file path provided to extractSheets().');
   }
 
   const workbook = xlsx.readFile(filePath);

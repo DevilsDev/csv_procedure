@@ -10,6 +10,6 @@ const path = require('path');
 
 const version = fs.readFileSync(path.resolve(__dirname, '../VERSION'), 'utf-8').trim();
 
-console.log(`\n🩺 Clinisync CLI v${version}\n`);
+console.log(`\nClinisync CLI v${version}\n`);
 console.log('Usage: npm run dev OR POST /upload with Excel files');
 console.log('More CLI commands coming soon...\n');

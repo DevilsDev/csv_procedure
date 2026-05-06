@@ -44,17 +44,17 @@ fileInput.addEventListener('change', () => {
  */
 function handleFileSelection(file) {
   if (!file || !file.name.match(/\.(xlsx|xls|ods)$/i)) {
-    alert('⚠️ Please upload a valid Excel file (.xlsx, .xls, .ods).');
+    alert('Please upload a valid Excel file (.xlsx, .xls, .ods).');
     return;
   }
 
   if (file.size > 5 * 1024 * 1024) {
-    alert('❌ File is too large. Maximum allowed size is 5MB.');
+    alert('File is too large. Maximum allowed size is 5MB.');
     return;
   }
 
   selectedFile = file;
-  dropZone.innerHTML = `<p>📄 Selected: ${file.name}</p>`;
+  dropZone.innerHTML = `<p>Selected: ${escapeHtml(file.name)}</p>`;
   removeButton.style.display = 'inline-block';
   responseDisplay.textContent = '';
 }
@@ -73,7 +73,7 @@ function renderSuccess(payload) {
   const fileItems = files.map(name => `<li>${escapeHtml(name)}</li>`).join('');
   responseDisplay.innerHTML = `
     <div class="summary">
-      <strong>✅ ${escapeHtml(payload.message || 'Upload completed')}</strong>
+      <strong>${escapeHtml(payload.message || 'Upload completed')}</strong>
       <div>Sheets processed: ${Number(payload.sheetsProcessed) || 0}</div>
       <div>Rows processed: ${Number(payload.rowsProcessed) || 0}</div>
       <div>Duplicates removed: ${Number(payload.duplicatesRemoved) || 0}</div>
@@ -86,7 +86,7 @@ function renderSuccess(payload) {
 }
 
 function renderError(message) {
-  responseDisplay.textContent = `❌ ${message}`;
+  responseDisplay.textContent = message;
 }
 
 /**
@@ -94,7 +94,7 @@ function renderError(message) {
  */
 async function uploadFile() {
   if (!selectedFile) {
-    alert('⚠️ No file selected!');
+    alert('No file selected.');
     return;
   }
 

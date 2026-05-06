@@ -23,7 +23,7 @@
     "prepare": "husky install",
     "generate:fixtures": "node src/utils/generateFixtures.js",
     "upload:coverage": "codecov -f coverage/lcov.info --disable=gcov",
-    "release": "npm run ci && npm version patch -m \"🔖 Release v%s\" && git push && git push --tags"
+    "release": "npm run ci && npm version patch -m \"Release v%s\" && git push && git push --tags"
   },
   "repository": {
     "type": "git",

@@ -13,7 +13,7 @@ Built with Node.js and Express, it provides both API and CLI interfaces and supp
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Install & Run
 
@@ -32,7 +32,7 @@ Returns a JSON response with a list of generated cleaned CSV files.
 
 ---
 
-## 🧼 Cleaning Rules
+## Cleaning Rules
 
 - `NHI` → anonymized `ID-001`, `ID-002`, etc.
 - `DOB` → `Age` (accurate, format-tolerant)
@@ -41,7 +41,7 @@ Returns a JSON response with a list of generated cleaned CSV files.
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 csv_procedure/
@@ -57,7 +57,7 @@ csv_procedure/
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ```bash
 npm test
@@ -67,7 +67,7 @@ Includes full unit and integration coverage with Jest.
 
 ---
 
-## 📝 Documentation
+## Documentation
 
 Full docs available at:  
 **https://devilsdev.github.io/csv_procedure/**
@@ -88,13 +88,13 @@ To deploy:
 
 ---
 
-## 📦 Release History
+## Release History
 
 See [`CHANGELOG.md`](./CHANGELOG.md)
 
 ---
 
-## 📄 License
+## License
 
 Licensed under the MIT License.  
 (c) Ali Kahwaji, 2025

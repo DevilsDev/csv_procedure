@@ -11,7 +11,7 @@ export default [
     files: ['**/*.js'],
     languageOptions: {
       ecmaVersion: 'latest',
-      sourceType: 'script', // ✅ allow require/module.exports
+      sourceType: 'script', // allow require/module.exports
       globals: {
         require: true,
         module: true,

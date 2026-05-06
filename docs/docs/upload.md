@@ -8,11 +8,11 @@ slug: /api-upload
 
 The `POST /upload` endpoint allows users to upload `.xlsx`, `.xls`, or `.ods` files for real-time cleaning and transformation.
 
-## 🔐 Authentication
+## Authentication
 
 When the server is started with the `CLINISYNC_API_KEY` environment variable set, every request to `/upload` must include the key in either an `Authorization: Bearer <key>` or `X-API-Key: <key>` header. When the variable is unset (development only), the endpoint is unauthenticated and the server logs a startup warning.
 
-## 📥 Request
+## Request
 
 - **Endpoint:** `/upload`
 - **Method:** `POST`
@@ -27,7 +27,7 @@ curl -F "excel=@/path/to/file.xlsx" \
      http://localhost:3000/upload
 ```
 
-## 📤 Response
+## Response
 
 - **Content-Type:** `application/json`
 - Returns a JSON document describing every generated CSV plus a manifest:

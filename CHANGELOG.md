@@ -1,4 +1,4 @@
-# 🧾 CHANGELOG
+# CHANGELOG
 
 All notable changes to the Clinisync project will be documented in this file.
 
@@ -6,7 +6,7 @@ All notable changes to the Clinisync project will be documented in this file.
 
 ## [2.5.0] - 2025-03-30
 
-### ✨ Added
+### Added
 - Automated fixture generator utility `src/utils/generateFixtures.js`
 - `npm run generate:fixtures` script for one-command fixture regeneration
 - Edge-case test suites for:
@@ -18,17 +18,17 @@ All notable changes to the Clinisync project will be documented in this file.
   - Missing file uploads
   - Oversized file rejection (>5MB)
 
-### ♻️ Changed
+### Changed
 - `uploadRoute.test.js` refactored for improved cross-platform path resolution
 - Tests now auto-regenerate fixtures before running using `generateAllFixtures()`
 - Reorganized test structure under `__tests__`, including fixture isolation
 
-### 🐛 Fixed
+### Fixed
 - Broken test cases in `load.test.js` (updated error messages)
 - Inconsistent path resolution for fixture access on Windows
 - `globalSetup` fixture injection issues now resolved with local regeneration
 
-### 📊 Coverage
+### Coverage
 - Overall test coverage increased to **93%+**
 - 100% function coverage in core ETL modules (`idMapper`, `cleanWorksheetData`, etc.)
 - Added edge case handling for mixed headers, blanks, and nulls
@@ -36,7 +36,7 @@ All notable changes to the Clinisync project will be documented in this file.
 ---
 
 ## [2.4.1] - 2025-03-26
-### 🧹 Final Polish: Version File & Docs
+### Final Polish: Version File & Docs
 
 - Added `VERSION` file for CLI & release automation
 - Committed `CHANGELOG.md` tracking all historical milestones
@@ -46,7 +46,7 @@ All notable changes to the Clinisync project will be documented in this file.
 ---
 
 ## [2.4.0] - 2025-03-26
-### 🔁 Major Refactor: ETL Pipeline
+### Major Refactor: ETL Pipeline
 
 - Introduced modular ETL architecture:
   - `extract.js`: loads all sheets from uploaded Excel file
@@ -62,7 +62,7 @@ All notable changes to the Clinisync project will be documented in this file.
 ---
 
 ## [2.3.0] - 2025-03-24
-### 📁 Docs Infrastructure
+### Docs Infrastructure
 
 - Added full Docusaurus documentation site
 - Markdown docs:
@@ -75,7 +75,7 @@ All notable changes to the Clinisync project will be documented in this file.
 ---
 
 ## [2.2.0] - 2025-03-20
-### 🧪 Test & Lint Suite
+### Test & Lint Suite
 
 - Integrated ESLint v9 flat config (`eslint.config.mjs`)
 - Polyfilled JSDOM for frontend unit test coverage
@@ -87,7 +87,7 @@ All notable changes to the Clinisync project will be documented in this file.
 ---
 
 ## [2.1.0] - 2025-03-18
-### 🎨 Frontend Enhancements
+### Frontend Enhancements
 
 - Added drag-and-drop UI (`public/js/upload.js`)
 - DOM simulation test added for upload logic
@@ -97,7 +97,7 @@ All notable changes to the Clinisync project will be documented in this file.
 ---
 
 ## [2.0.0] - 2025-03-14
-### 📦 MVP Launch
+### MVP Launch
 
 - Backend setup with Express.js
 - `/upload` endpoint with file handling via `multer`
@@ -113,7 +113,7 @@ All notable changes to the Clinisync project will be documented in this file.
 ---
 
 ## [1.0.0] - 2025-03-12
-### 🛠 Project Bootstrap
+### Project Bootstrap
 
 - Initialized Node.js project
 - Project folder structure created
