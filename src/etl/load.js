@@ -1,12 +1,15 @@
 /**
- * Version: 2.4.0
+ * Version: 2.5.7
  * Description: Persists cleaned sheet data into timestamped CSV files for each worksheet.
+ *              File I/O is async; CSV serialization is in-memory and bounded by the 5 MB upload cap.
  * Author: Ali Kahwaji
  */
 
-const fs = require('fs');
+const fsp = require('fs').promises;
 const path = require('path');
 const xlsx = require('xlsx');
+
+const OUTPUT_DIR = path.resolve(__dirname, '../../csvs');
 
 let writeCounter = 0;
 
@@ -40,40 +43,39 @@ function nextOutputToken(baseName, suffix) {
  * @param {string} baseName - Base name derived from the original uploaded file
  * @param {string} sheetName - The name of the individual sheet being processed
  * @param {Array<Array<any>>} data - Two-dimensional array of cleaned sheet data
- * @returns {string} Absolute path to the saved CSV file
+ * @returns {Promise<string>} Absolute path to the saved CSV file
  * @throws {Error} If data is missing or improperly formatted
  */
-function writeCsvOutput(baseName, sheetName, data) {
+async function writeCsvOutput(baseName, sheetName, data) {
   if (!Array.isArray(data) || data.length === 0) {
-    throw new Error(`? No data provided for sheet: "${sheetName}"`);
+    throw new Error(`No data provided for sheet: "${sheetName}"`);
   }
 
   const safeSheet = sanitizeName(sheetName, 'sheet');
   const token = nextOutputToken(baseName, 'converted');
   const filename = `${token.filename}-${safeSheet}.csv`;
-  const outputPath = path.join(__dirname, '../../csvs', filename);
+  const outputPath = path.join(OUTPUT_DIR, filename);
 
   try {
     const worksheet = xlsx.utils.aoa_to_sheet(data);
-    const workbook = xlsx.utils.book_new();
-    xlsx.utils.book_append_sheet(workbook, worksheet, 'Cleaned');
-    xlsx.writeFile(workbook, outputPath, { bookType: 'csv' });
+    const csvText = xlsx.utils.sheet_to_csv(worksheet);
+    await fsp.writeFile(outputPath, csvText, 'utf8');
   } catch (err) {
-    throw new Error(`? Failed to write CSV file: ${err.message}`);
+    throw new Error(`Failed to write CSV file: ${err.message}`);
   }
 
   return outputPath;
 }
 
-function writeManifestOutput(baseName, manifestData) {
+async function writeManifestOutput(baseName, manifestData) {
   const token = nextOutputToken(baseName, 'manifest');
   const filename = `${token.filename}.json`;
-  const outputPath = path.join(__dirname, '../../csvs', filename);
+  const outputPath = path.join(OUTPUT_DIR, filename);
 
   try {
-    fs.writeFileSync(outputPath, JSON.stringify(manifestData, null, 2));
+    await fsp.writeFile(outputPath, JSON.stringify(manifestData, null, 2), 'utf8');
   } catch (err) {
-    throw new Error(`? Failed to write manifest file: ${err.message}`);
+    throw new Error(`Failed to write manifest file: ${err.message}`);
   }
 
   return outputPath;

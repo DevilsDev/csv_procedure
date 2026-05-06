@@ -1,6 +1,7 @@
 /**
- * Version: 2.1.0
- * Description: Handles file selection, drag-and-drop, validation, and upload to the server.
+ * Version: 2.5.5
+ * Description: Handles file selection, drag-and-drop, validation, API-key forwarding,
+ *              and JSON-aware response rendering.
  * Author: Ali Kahwaji
  */
 
@@ -9,6 +10,7 @@ const fileInput = document.getElementById('fileInput');
 const uploadButton = document.getElementById('uploadBtn');
 const removeButton = document.getElementById('removeBtn');
 const responseDisplay = document.getElementById('response');
+const apiKeyInput = document.getElementById('apiKeyInput');
 
 let selectedFile = null;
 
@@ -57,6 +59,36 @@ function handleFileSelection(file) {
   responseDisplay.textContent = '';
 }
 
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function renderSuccess(payload) {
+  const files = Array.isArray(payload.files) ? payload.files : [];
+  const fileItems = files.map(name => `<li>${escapeHtml(name)}</li>`).join('');
+  responseDisplay.innerHTML = `
+    <div class="summary">
+      <strong>✅ ${escapeHtml(payload.message || 'Upload completed')}</strong>
+      <div>Sheets processed: ${Number(payload.sheetsProcessed) || 0}</div>
+      <div>Rows processed: ${Number(payload.rowsProcessed) || 0}</div>
+      <div>Duplicates removed: ${Number(payload.duplicatesRemoved) || 0}</div>
+      <div>Invalid DOB: ${Number(payload.invalidDobCount) || 0}</div>
+      <div>Missing NHI: ${Number(payload.missingNhiCount) || 0}</div>
+      <div>Files: <ul>${fileItems}</ul></div>
+      ${payload.manifest ? `<div>Manifest: ${escapeHtml(payload.manifest)}</div>` : ''}
+    </div>
+  `;
+}
+
+function renderError(message) {
+  responseDisplay.textContent = `❌ ${message}`;
+}
+
 /**
  * Sends the file to the backend API
  */
@@ -70,19 +102,35 @@ async function uploadFile() {
   formData.append('excel', selectedFile);
   responseDisplay.textContent = 'Uploading...';
 
+  const headers = {};
+  const apiKey = apiKeyInput && apiKeyInput.value.trim();
+  if (apiKey) {
+    headers['Authorization'] = `Bearer ${apiKey}`;
+  }
+
   try {
     const response = await fetch('/upload', {
       method: 'POST',
-      body: formData
+      body: formData,
+      headers,
     });
 
-    const result = await response.text();
-    responseDisplay.textContent = response.ok
-      ? `✅ ${result}`
-      : `❌ Upload failed: ${result}`;
+    const contentType = response.headers.get('content-type') || '';
+    const isJson = contentType.includes('application/json');
+    const payload = isJson ? await response.json() : await response.text();
+
+    if (response.ok && isJson) {
+      renderSuccess(payload);
+      return;
+    }
+
+    const message = isJson
+      ? (payload.error || 'Upload failed')
+      : (payload || `HTTP ${response.status}`);
+    renderError(message);
   } catch (error) {
     console.error('Upload Error:', error);
-    responseDisplay.textContent = '❌ Error uploading file.';
+    renderError('Error uploading file.');
   }
 }
 

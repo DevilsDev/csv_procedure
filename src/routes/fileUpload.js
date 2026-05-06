@@ -1,5 +1,5 @@
 /**
- * Version: 2.4.0
+ * Version: 2.5.5
  * Description: Handles Excel file upload, runs ETL pipeline, and returns cleaned CSV paths.
  * Author: Ali Kahwaji
  */
@@ -10,7 +10,8 @@ const fs = require('fs');
 const extract = require('../etl/extract');
 const { transformSheetWithStats } = require('../etl/transform');
 const { writeCsvOutput, writeManifestOutput } = require('../etl/load');
-const { resetIdMap } = require('../etl/idMapper');
+const { createIdMapper } = require('../etl/idMapper');
+const { sweepCsvDirectory } = require('../etl/retention');
 
 const router = express.Router();
 
@@ -36,7 +37,9 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'No file uploaded.' });
     }
 
-    resetIdMap();
+    sweepCsvDirectory();
+
+    const idMapper = createIdMapper();
 
     const baseName = path.parse(file.originalname).name;
     const sheets = extract.extractSheets(file.path);
@@ -51,8 +54,8 @@ router.post('/', async (req, res) => {
     };
 
     for (const sheet of sheets) {
-      const result = transformSheetWithStats(sheet.rows);
-      const outputPath = writeCsvOutput(baseName, sheet.name, result.rows);
+      const result = transformSheetWithStats(sheet.rows, idMapper);
+      const outputPath = await writeCsvOutput(baseName, sheet.name, result.rows);
       const fileName = path.basename(outputPath);
       outputFiles.push(fileName);
       sheetOutputs.push({
@@ -67,7 +70,7 @@ router.post('/', async (req, res) => {
       summary.missingNhiCount += result.stats.missingNhiCount;
     }
 
-    const manifestPath = writeManifestOutput(baseName, {
+    const manifestPath = await writeManifestOutput(baseName, {
       sourceFileName: file.originalname,
       generatedAt: new Date().toISOString(),
       ...summary,

@@ -1,25 +1,19 @@
 /**
- * Version: 2.7.1
- * Description: Full upload route integration test with fixture regeneration and response expectations.
+ * Version: 2.5.4
+ * Description: Integration tests for /upload using the real app (validation + multer + ETL).
  * Author: Ali Kahwaji
  */
 
 const request = require('supertest');
-const express = require('express');
-const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
-const fileUploadRoute = require('../src/routes/fileUpload');
+const app = require('../src/app');
 const { generateAllFixtures } = require('../src/utils/generateFixtures');
-
-const app = express();
-const upload = multer({ dest: 'uploads/' });
-
-app.use('/upload', upload.single('excel'), fileUploadRoute);
 
 describe('POST /upload', () => {
   const fixtureDir = path.resolve(__dirname, 'fixtures');
   const validExcelPath = path.join(fixtureDir, 'case-mix-sample.xlsx');
+  const invalidPath = path.join(fixtureDir, 'invalid.txt');
   const uploadsDir = path.resolve('uploads');
   const csvDir = path.resolve('csvs');
 
@@ -44,6 +38,9 @@ describe('POST /upload', () => {
 
     if (!fs.existsSync(validExcelPath)) {
       throw new Error('Valid fixture missing: case-mix-sample.xlsx');
+    }
+    if (!fs.existsSync(invalidPath)) {
+      throw new Error('Invalid fixture missing: invalid.txt');
     }
   });
 
@@ -120,6 +117,74 @@ describe('POST /upload', () => {
   it('should reject missing file upload', async () => {
     const res = await request(app).post('/upload');
     expect(res.statusCode).toBe(400);
-    expect(res.text.toLowerCase()).toMatch(/no file uploaded/);
+    expect(res.body.error.toLowerCase()).toMatch(/no file uploaded/);
+  });
+
+  it('should reject unsupported file extension', async () => {
+    const res = await request(app)
+      .post('/upload')
+      .attach('excel', invalidPath);
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error.toLowerCase()).toMatch(/unsupported file format/);
+  });
+
+  it('should reject files larger than 5MB', async () => {
+    const oversizePath = path.join(fixtureDir, 'oversize.xlsx');
+    fs.writeFileSync(oversizePath, Buffer.alloc(6 * 1024 * 1024, 0));
+
+    try {
+      const res = await request(app)
+        .post('/upload')
+        .attach('excel', oversizePath);
+      expect(res.statusCode).toBe(400);
+      expect(res.body.error.toLowerCase()).toMatch(/maximum size/);
+    } finally {
+      fs.unlinkSync(oversizePath);
+    }
+  });
+
+  describe('with API key required', () => {
+    const originalKey = process.env.CLINISYNC_API_KEY;
+
+    beforeAll(() => {
+      process.env.CLINISYNC_API_KEY = 'test-secret-key';
+    });
+
+    afterAll(() => {
+      if (originalKey === undefined) delete process.env.CLINISYNC_API_KEY;
+      else process.env.CLINISYNC_API_KEY = originalKey;
+    });
+
+    it('should reject requests with no API key', async () => {
+      const res = await request(app)
+        .post('/upload')
+        .attach('excel', validExcelPath);
+      expect(res.statusCode).toBe(401);
+      expect(res.body.error.toLowerCase()).toMatch(/api key/);
+    });
+
+    it('should reject requests with wrong API key', async () => {
+      const res = await request(app)
+        .post('/upload')
+        .set('Authorization', 'Bearer wrong-key')
+        .attach('excel', validExcelPath);
+      expect(res.statusCode).toBe(401);
+    });
+
+    it('should accept requests with valid Bearer token', async () => {
+      const res = await request(app)
+        .post('/upload')
+        .set('Authorization', 'Bearer test-secret-key')
+        .attach('excel', validExcelPath);
+      expect(res.statusCode).toBe(200);
+    });
+
+    it('should accept requests with valid X-API-Key header', async () => {
+      const res = await request(app)
+        .post('/upload')
+        .set('X-API-Key', 'test-secret-key')
+        .attach('excel', validExcelPath);
+      expect(res.statusCode).toBe(200);
+    });
   });
 });

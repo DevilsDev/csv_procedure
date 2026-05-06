@@ -1,5 +1,5 @@
 /**
- * Version: 2.4.0
+ * Version: 2.5.4
  * Description: Initializes and exports the Express app with static serving, upload handling, and centralized error management.
  * Author: Ali Kahwaji
  */
@@ -11,13 +11,19 @@ const fs = require('fs');
 require('dotenv').config();
 
 const fileUploadRoute = require('./routes/fileUpload');
+const rateLimit = require('./middleware/rateLimit');
+const apiKey = require('./middleware/apiKey');
+const virusScan = require('./middleware/virusScan');
+const { createRedisStore } = require('./middleware/redisRateLimitStore');
 
 const app = express();
 const ALLOWED_EXTENSIONS = new Set(['.xlsx', '.xls', '.ods']);
 const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
-['uploads', 'csvs'].forEach(dir => {
-  const dirPath = path.resolve(__dirname, '..', dir);
+const UPLOADS_DIR = path.resolve(__dirname, '..', 'uploads');
+const CSVS_DIR = path.resolve(__dirname, '..', 'csvs');
+
+[UPLOADS_DIR, CSVS_DIR].forEach(dirPath => {
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true });
   }
@@ -26,7 +32,7 @@ const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 app.use(express.static(path.resolve(__dirname, '../public')));
 
 const storage = multer.diskStorage({
-  destination: 'uploads/',
+  destination: UPLOADS_DIR,
   filename: (req, file, callback) => {
     const safeName = file.originalname.replace(/\s+/g, '_');
     const timestampedName = `${Date.now()}-${safeName}`;
@@ -65,7 +71,21 @@ function uploadExcel(req, res, next) {
   });
 }
 
-app.use('/upload', uploadExcel, fileUploadRoute);
+function buildRateLimitStore() {
+  if (!process.env.REDIS_URL) return undefined;
+  try {
+    const store = createRedisStore({ url: process.env.REDIS_URL });
+    console.log('[rateLimit] using Redis-backed store at', process.env.REDIS_URL);
+    return store;
+  } catch (err) {
+    console.warn('[rateLimit] failed to init Redis store, falling back to in-memory:', err.message);
+    return undefined;
+  }
+}
+
+const uploadLimiter = rateLimit({ windowMs: 60_000, max: 30, store: buildRateLimitStore() });
+
+app.use('/upload', uploadLimiter, uploadExcel, apiKey(), virusScan(), fileUploadRoute);
 
 app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
   if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {

@@ -26,7 +26,7 @@
     "release": "npm run ci && npm version patch -m \"🔖 Release v%s\" && git push && git push --tags"
   },
   "repository": {
-    "type": "git, module",
+    "type": "git",
     "url": "git+https://github.com/DevilsDev/csv_procedure.git"
   },
   "keywords": [
@@ -35,7 +35,7 @@
     "etl"
   ],
   "author": "Ali Kahwaji",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/DevilsDev/csv_procedure/issues"
   },

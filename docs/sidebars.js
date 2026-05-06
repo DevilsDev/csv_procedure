@@ -25,7 +25,7 @@ export default {
         'api/cli-usage',
         'api/endpoints',
         'api/examples',
-        'upload', // ✅ No slash
+        'upload',
       ],
     },
     {
@@ -35,7 +35,7 @@ export default {
         'cleaning/dob-to-age',
         'cleaning/duplicates',
         'cleaning/fields',
-        'rules', // ✅ No slash
+        'rules',
         'cleaning/sensitive-data',
       ],
     },

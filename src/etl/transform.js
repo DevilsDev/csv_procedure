@@ -1,10 +1,11 @@
 /**
- * Version: 2.4.0
- * Description: Applies anonymization and data cleaning rules to a spreadsheet sheet, including NHI?ID mapping and DOB?Age transformation.
+ * Version: 2.5.4
+ * Description: Applies anonymization and data cleaning rules to a spreadsheet sheet, including
+ *              NHI->ID mapping and DOB->Age transformation.
  * Author: Ali Kahwaji
  */
 
-const { getAnonymizedId } = require('./idMapper');
+const { createIdMapper } = require('./idMapper');
 
 function getEmptyStats() {
   return {
@@ -28,13 +29,17 @@ function isBlankCell(value) {
  * converting DOB to age, and removing duplicate or irrelevant rows.
  *
  * @param {Array<Array<any>>} rows - Raw worksheet rows extracted using xlsx
+ * @param {{ getAnonymizedId: (nhi: string) => string }} [idMapper]
+ *   Optional shared mapper so multiple sheets in the same workbook share NHI->ID assignments.
+ *   When omitted, a fresh per-call mapper is used.
  * @returns {{ rows: Array<Array<any>>, stats: { rowsProcessed: number, duplicatesRemoved: number, invalidDobCount: number, missingNhiCount: number } }}
  */
-function transformSheetWithStats(rows) {
+function transformSheetWithStats(rows, idMapper) {
   if (!Array.isArray(rows) || rows.length === 0) {
     return { rows: [], stats: getEmptyStats() };
   }
 
+  const mapper = idMapper || createIdMapper();
   const rawHeader = rows[0];
   const cleaned = [];
   const columnMap = [];
@@ -49,7 +54,7 @@ function transformSheetWithStats(rows) {
       columnMap.push('ID');
     } else if (rawCol === 'dob') {
       columnMap.push('Age');
-    } else if (['contact', 'address'].some(s => rawCol.includes(s))) {
+    } else if (rawCol === 'contact' || rawCol === 'address') {
       columnMap.push(null);
     } else {
       columnMap.push(rawHeader[i]);
@@ -62,7 +67,7 @@ function transformSheetWithStats(rows) {
 
   for (let i = 1; i < rows.length; i++) {
     const rawRow = rows[i];
-    if (!Array.isArray(rawRow) || rawRow.every(cell => !cell)) continue;
+    if (!Array.isArray(rawRow) || rawRow.every(isBlankCell)) continue;
 
     stats.rowsProcessed += 1;
     const cleanedRow = [];
@@ -78,7 +83,7 @@ function transformSheetWithStats(rows) {
           stats.missingNhiCount += 1;
           cleanedRow.push('');
         } else {
-          cleanedRow.push(getAnonymizedId(cellValue));
+          cleanedRow.push(mapper.getAnonymizedId(cellValue));
         }
       } else if (label === 'Age') {
         const age = calculateAgeFromDOB(cellValue);
@@ -91,7 +96,7 @@ function transformSheetWithStats(rows) {
       }
     }
 
-    const key = cleanedRow.join('|');
+    const key = JSON.stringify(cleanedRow);
     if (!seen.has(key)) {
       seen.add(key);
       cleaned.push(cleanedRow);
@@ -105,10 +110,11 @@ function transformSheetWithStats(rows) {
 
 /**
  * @param {Array<Array<any>>} rows
+ * @param {{ getAnonymizedId: (nhi: string) => string }} [idMapper]
  * @returns {Array<Array<any>>}
  */
-function transformSheet(rows) {
-  return transformSheetWithStats(rows).rows;
+function transformSheet(rows, idMapper) {
+  return transformSheetWithStats(rows, idMapper).rows;
 }
 
 function calculateAgeFromDOB(dobRaw) {

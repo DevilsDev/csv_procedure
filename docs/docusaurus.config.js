@@ -12,7 +12,6 @@ export default {
   url: 'https://devilsdev.github.io',
   baseUrl: '/csv_procedure/',
   onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon-from-original.png',
   organizationName: 'DevilsDev', // GitHub user/org
   projectName: 'csv_procedure',  // GitHub repo
@@ -20,6 +19,12 @@ export default {
   i18n: {
     defaultLocale: 'en',
     locales: ['en'],
+  },
+
+  markdown: {
+    hooks: {
+      onBrokenMarkdownLinks: 'warn',
+    },
   },
 
   themeConfig: {
@@ -61,12 +66,6 @@ export default {
         },
       ],
       copyright: `© ${new Date().getFullYear()} Clinisync by Ali Kahwaji`,
-    },
-
-    algolia: {
-      appId: 'YOUR_APP_ID',
-      apiKey: 'YOUR_SEARCH_API_KEY',
-      indexName: 'clinisync_docs',
     },
   },
 

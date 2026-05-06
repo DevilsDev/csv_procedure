@@ -1,42 +1,49 @@
 /**
- * Version: 2.4.0
- * Description: Centralized NHI-to-ID anonymization utility with resettable map and sequential ID generation.
+ * Version: 2.5.4
+ * Description: Per-request NHI-to-ID anonymization. Use createIdMapper() for an isolated session;
+ *              singleton getAnonymizedId/resetIdMap kept for backward compatibility.
  * Author: Ali Kahwaji
  */
 
-const nhiToIdMap = new Map();
-let idCounter = 1;
-
 /**
- * Retrieves a consistent anonymized ID for a given NHI input.
- * Ensures each unique NHI is mapped to a deterministic anonymized ID during the session.
- *
- * @param {string} nhi - The original National Health Identifier (or equivalent patient code)
- * @returns {string} Anonymized ID (e.g., "ID-001"), or empty string for invalid input
+ * Creates an isolated NHI→ID mapper. Each instance owns its own counter and map,
+ * so concurrent ETL runs cannot collide.
  */
-function getAnonymizedId(nhi) {
-  if (typeof nhi !== 'string' || nhi.trim() === '') return '';
+function createIdMapper() {
+  const map = new Map();
+  let counter = 1;
 
-  const key = nhi.trim();
-
-  if (!nhiToIdMap.has(key)) {
-    const anonymizedId = `ID-${String(idCounter++).padStart(3, '0')}`;
-    nhiToIdMap.set(key, anonymizedId);
-  }
-
-  return nhiToIdMap.get(key);
+  return {
+    getAnonymizedId(nhi) {
+      if (typeof nhi !== 'string' || nhi.trim() === '') return '';
+      const key = nhi.trim();
+      if (!map.has(key)) {
+        map.set(key, `ID-${String(counter++).padStart(3, '0')}`);
+      }
+      return map.get(key);
+    },
+    reset() {
+      map.clear();
+      counter = 1;
+    },
+  };
 }
 
+const _singleton = createIdMapper();
+
 /**
- * Resets the internal mapping of NHI to anonymized ID and the counter.
- * Invoked before each new ETL process to ensure unique session mapping.
+ * Singleton NHI→ID lookup. Prefer createIdMapper() in new code.
  */
+function getAnonymizedId(nhi) {
+  return _singleton.getAnonymizedId(nhi);
+}
+
 function resetIdMap() {
-  nhiToIdMap.clear();
-  idCounter = 1;
+  _singleton.reset();
 }
 
 module.exports = {
+  createIdMapper,
   getAnonymizedId,
   resetIdMap,
 };

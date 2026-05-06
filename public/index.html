@@ -75,6 +75,32 @@
     #removeBtn:hover {
       background-color: #c82333;
     }
+
+    .api-key-row {
+      margin-top: 1rem;
+    }
+
+    #apiKeyInput {
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      width: 280px;
+    }
+
+    .summary {
+      text-align: left;
+      display: inline-block;
+      margin-top: 0.5rem;
+      background: white;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    .summary ul {
+      margin: 0.25rem 0 0 1rem;
+      padding: 0;
+    }
   </style>
 </head>
 <body>
@@ -83,6 +109,10 @@
   <div class="drop-zone" id="dropZone">
     <p>Drag & drop an Excel file here, or click to upload</p>
     <input type="file" id="fileInput" accept=".xlsx,.xls,.ods" />
+  </div>
+
+  <div class="api-key-row">
+    <input type="password" id="apiKeyInput" placeholder="API key (optional, if server requires one)" autocomplete="off" />
   </div>
 
   <button id="uploadBtn">Upload</button>
