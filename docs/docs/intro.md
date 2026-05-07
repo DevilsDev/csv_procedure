@@ -9,6 +9,10 @@ Clinisync is a small, opinionated ETL service that takes spreadsheet exports of 
 
 It is **not** a general-purpose data warehouse, a HIPAA-certified product, or a managed service — it is the cleaning layer that sits in front of one.
 
+:::tip Try it without installing anything
+A self-contained version of the cleaner — same rules, no server — runs entirely in your browser at **[/tool/](pathname:///csv_procedure/tool/)**. The workbook never leaves your machine.
+:::
+
 ## What it does today
 
 - Accepts `.xlsx`, `.xls`, and `.ods` uploads up to 5 MB.

@@ -37,6 +37,11 @@ export default {
       },
       items: [
         {
+          href: 'pathname:///csv_procedure/tool/',
+          label: 'Try the demo',
+          position: 'left',
+        },
+        {
           href: 'https://github.com/DevilsDev/csv_procedure',
           label: 'GitHub',
           position: 'right',

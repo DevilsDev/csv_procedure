@@ -1,5 +1,5 @@
 /**
- * Version: 2.5.8
+ * Version: 2.6.1
  * Description: Clinisync homepage hero banner. Renders only the <header> — the surrounding
  *              Layout (navbar + footer) is provided by the parent page (src/pages/index.js).
  * Author: Ali Kahwaji
@@ -9,10 +9,12 @@ import React from 'react';
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import styles from './styles.module.css';
 
 export default function HomepageHeader() {
   const { siteConfig } = useDocusaurusContext();
+  const toolUrl = useBaseUrl('/tool/');
 
   return (
     <header className={clsx('hero hero--dark', styles.heroBanner)}>
@@ -24,7 +26,10 @@ export default function HomepageHeader() {
               Everything you need to clean, convert, and secure clinical Excel data across multiple sheets.
             </p>
             <div className={styles.heroButtons}>
-              <Link className="button button--primary button--lg" to="/about">
+              <a className="button button--primary button--lg" href={toolUrl}>
+                Try the demo
+              </a>
+              <Link className="button button--secondary button--lg" to="/about">
                 About
               </Link>
               <Link className="button button--secondary button--lg" to="/api-upload">

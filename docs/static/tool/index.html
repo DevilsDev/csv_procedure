@@ -1,0 +1,102 @@
+<!--
+  Version: 2.6.1
+  Description: Self-contained Clinisync demo. The entire ETL runs in the browser —
+               nothing is uploaded, nothing is stored on disk, no server is contacted
+               after the page itself loads. Hosted on GitHub Pages alongside the docs.
+  Author: Ali Kahwaji
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="referrer" content="no-referrer" />
+  <title>Clinisync · Try the cleaner</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="page">
+
+    <header class="app-header">
+      <div class="title-row">
+        <h1>Clinisync</h1>
+        <span class="privacy-badge" title="Everything runs locally in this browser tab. No data is uploaded.">In-browser · No data leaves your computer</span>
+      </div>
+      <p>Drop a clinical Excel workbook in below and the cleaning rules run on your machine. Cleaned CSVs and the manifest are produced as downloads — there is no server in this version.</p>
+    </header>
+
+    <details class="card" id="rulesCard">
+      <summary>What gets cleaned</summary>
+      <p class="card-subtitle" style="margin-top:0.75rem;">
+        These rules apply to every sheet in your workbook. The output never contains the original NHI, DOB, address, or contact details.
+      </p>
+      <div class="rules-grid">
+        <div class="rule">
+          <strong>NHI &rarr; ID</strong>
+          <span>Replaced with sequential anonymized IDs (<code>ID-001</code>, <code>ID-002</code>, &hellip;) shared across sheets in the same upload.</span>
+        </div>
+        <div class="rule">
+          <strong>DOB &rarr; Age</strong>
+          <span>Converted to whole-year age, clamped to <code>0..130</code>. Invalid dates become empty.</span>
+        </div>
+        <div class="rule">
+          <strong>Address / Contact</strong>
+          <span>Columns named exactly <code>Address</code> or <code>Contact</code> are dropped entirely.</span>
+        </div>
+        <div class="rule">
+          <strong>Duplicates &amp; blanks</strong>
+          <span>Exact-duplicate rows after transformation are removed. Empty rows and unnamed columns are skipped.</span>
+        </div>
+      </div>
+    </details>
+
+    <div class="card">
+      <h2>Clean a workbook</h2>
+      <p class="card-subtitle">Up to 5 MB. Accepted formats: <code>.xlsx</code>, <code>.xls</code>, <code>.ods</code>.</p>
+
+      <div class="drop-zone" id="dropZone">
+        <p>Drag &amp; drop an Excel file here, or click to choose one</p>
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.ods" />
+      </div>
+      <div class="selected-file" id="selectedFile" hidden></div>
+
+      <div class="controls">
+        <button id="uploadBtn" class="btn-primary">Clean</button>
+        <button id="sampleBtn" class="btn-secondary" type="button">Try with sample workbook</button>
+        <button id="removeBtn" class="btn-danger" type="button" hidden>Remove selection</button>
+      </div>
+
+      <div class="progress" id="progress" aria-hidden="true"><div class="bar" id="progressBar"></div></div>
+      <div class="status" id="status"></div>
+    </div>
+
+    <div class="card" id="results" aria-live="polite">
+      <h2 id="resultsTitle">Cleaning result</h2>
+      <p class="card-subtitle" id="resultsSubtitle"></p>
+
+      <div class="stats" id="statsGrid"></div>
+
+      <div class="tabs" id="resultsTabs" role="tablist"></div>
+      <div id="resultsPanels"></div>
+    </div>
+
+    <div class="card" id="historyCard" hidden>
+      <h2>Recent in this session</h2>
+      <p class="card-subtitle">Click any row to bring its results back into view. History is in-memory only — closing this tab clears it.</p>
+      <div class="history-list" id="historyList"></div>
+    </div>
+
+    <footer class="app-footer">
+      Clinisync &middot;
+      <a href="../">Documentation</a>
+      &middot;
+      <a href="https://github.com/DevilsDev/csv_procedure" target="_blank" rel="noreferrer">GitHub</a>
+    </footer>
+
+  </div>
+
+  <script src="./xlsx.full.min.js"></script>
+  <script src="./etl.js"></script>
+  <script src="./upload.js"></script>
+</body>
+</html>
