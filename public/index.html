@@ -1,361 +1,49 @@
 <!--
-  Version: 2.6.0
-  Description: Clinisync frontend. Surfaces every backend feature: the cleaning rules,
-               drag-and-drop upload with progress, optional API key, sample workbook,
-               per-sheet CSV preview, manifest JSON preview, downloadable artifacts,
-               and an in-session history of uploads.
+  Version: 2.7.0
+  Description: Thresh — server-served frontend. Same UI as the in-browser tool, plus an
+               optional API key field and round-trips through the local /upload endpoint.
   Author: Ali Kahwaji
 -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Clinisync</title>
-  <style>
-    :root {
-      --bg: #f4f6f8;
-      --surface: #ffffff;
-      --surface-muted: #fafbfc;
-      --border: #e1e4e8;
-      --border-strong: #b6bdc4;
-      --text: #24292f;
-      --muted: #57606a;
-      --accent: #0969da;
-      --accent-hover: #0550ae;
-      --danger: #cf222e;
-      --success: #1a7f37;
-      --warning: #9a6700;
-      --code-bg: #f6f8fa;
-      --radius: 6px;
-      --shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-      --mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.5;
-    }
-
-    .page { max-width: 920px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
-
-    /* ----- Header ----- */
-    header.app-header { margin-bottom: 1.5rem; }
-    header.app-header h1 { margin: 0 0 0.25rem; font-size: 1.75rem; }
-    header.app-header p { margin: 0; color: var(--muted); font-size: 0.95rem; }
-
-    /* ----- Card ----- */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.25rem 1.5rem;
-      margin-bottom: 1rem;
-      box-shadow: var(--shadow);
-    }
-    .card h2 { margin: 0 0 0.75rem; font-size: 1.05rem; font-weight: 600; }
-    .card .card-subtitle { margin: 0 0 1rem; color: var(--muted); font-size: 0.9rem; }
-
-    details.card summary {
-      cursor: pointer;
-      font-size: 1.05rem;
-      font-weight: 600;
-      list-style: none;
-      display: flex; justify-content: space-between; align-items: center;
-    }
-    details.card summary::-webkit-details-marker { display: none; }
-    details.card summary::after {
-      content: "▾"; color: var(--muted); font-size: 0.9rem;
-      transition: transform 0.15s ease;
-    }
-    details.card[open] summary::after { transform: rotate(180deg); }
-
-    /* ----- Rules grid ----- */
-    .rules-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 0.75rem;
-      margin-top: 1rem;
-    }
-    .rule {
-      padding: 0.75rem;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface-muted);
-    }
-    .rule strong { display: block; margin-bottom: 0.25rem; font-size: 0.9rem; }
-    .rule span { color: var(--muted); font-size: 0.85rem; }
-
-    /* ----- Upload area ----- */
-    .drop-zone {
-      border: 2px dashed var(--border-strong);
-      border-radius: var(--radius);
-      padding: 2.25rem 1rem;
-      background: var(--surface-muted);
-      text-align: center;
-      color: var(--muted);
-      cursor: pointer;
-      transition: border-color 0.15s ease, background 0.15s ease;
-    }
-    .drop-zone:hover, .drop-zone.dragover {
-      border-color: var(--accent);
-      background: #f1f8ff;
-      color: var(--accent);
-    }
-    .drop-zone p { margin: 0; }
-
-    input[type="file"] { display: none; }
-
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-top: 1rem;
-      align-items: center;
-    }
-
-    #apiKeyInput {
-      padding: 0.5rem 0.75rem;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 0.9rem;
-      flex: 1; min-width: 200px;
-      font-family: var(--mono);
-    }
-
-    button {
-      padding: 0.55rem 1rem;
-      font-size: 0.9rem;
-      font-weight: 500;
-      border: 1px solid transparent;
-      border-radius: var(--radius);
-      cursor: pointer;
-      transition: background 0.15s ease, border-color 0.15s ease;
-    }
-    .btn-primary { background: var(--accent); color: white; }
-    .btn-primary:hover { background: var(--accent-hover); }
-    .btn-primary:disabled { background: #94a3b8; cursor: not-allowed; }
-    .btn-secondary { background: white; color: var(--text); border-color: var(--border); }
-    .btn-secondary:hover { background: var(--code-bg); border-color: var(--border-strong); }
-    .btn-danger { background: white; color: var(--danger); border-color: var(--border); }
-    .btn-danger:hover { background: #fff5f5; border-color: var(--danger); }
-    .btn-ghost {
-      background: transparent;
-      color: var(--muted);
-      border-color: transparent;
-      padding: 0.35rem 0.5rem;
-      font-size: 0.85rem;
-    }
-    .btn-ghost:hover { color: var(--text); background: var(--code-bg); }
-
-    .selected-file { margin-top: 0.5rem; font-size: 0.9rem; color: var(--muted); }
-
-    /* ----- Progress ----- */
-    .progress {
-      margin-top: 0.75rem;
-      height: 6px;
-      background: var(--border);
-      border-radius: 999px;
-      overflow: hidden;
-      display: none;
-    }
-    .progress.visible { display: block; }
-    .progress > .bar {
-      height: 100%;
-      width: 0;
-      background: var(--accent);
-      transition: width 0.15s ease;
-    }
-    .progress.indeterminate > .bar {
-      width: 35% !important;
-      animation: indet 1.1s ease-in-out infinite;
-    }
-    @keyframes indet {
-      0%   { transform: translateX(-100%); }
-      100% { transform: translateX(285%); }
-    }
-
-    .status {
-      margin-top: 0.75rem;
-      font-size: 0.9rem;
-      color: var(--muted);
-      min-height: 1.25rem;
-    }
-    .status.error { color: var(--danger); }
-    .status.success { color: var(--success); }
-
-    /* ----- Results ----- */
-    #results { display: none; }
-    #results.visible { display: block; }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 0.75rem;
-      margin-bottom: 1rem;
-    }
-    .stat {
-      padding: 0.85rem 1rem;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface-muted);
-    }
-    .stat .value { font-size: 1.5rem; font-weight: 600; line-height: 1.1; }
-    .stat .label {
-      font-size: 0.78rem; color: var(--muted); margin-top: 0.2rem;
-      text-transform: uppercase; letter-spacing: 0.04em;
-    }
-
-    /* Tabs */
-    .tabs {
-      display: flex;
-      gap: 0.25rem;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 0.75rem;
-      flex-wrap: wrap;
-    }
-    .tab {
-      padding: 0.5rem 0.85rem;
-      cursor: pointer;
-      background: none;
-      border: 1px solid transparent;
-      border-bottom: none;
-      border-radius: var(--radius) var(--radius) 0 0;
-      color: var(--muted);
-      font-size: 0.9rem;
-      font-weight: 500;
-    }
-    .tab:hover { color: var(--text); }
-    .tab[aria-selected="true"] {
-      background: var(--surface);
-      border-color: var(--border);
-      color: var(--text);
-      margin-bottom: -1px;
-    }
-    .tab .badge {
-      display: inline-block;
-      margin-left: 0.4rem;
-      padding: 0.05rem 0.4rem;
-      font-size: 0.75rem;
-      background: var(--code-bg);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      color: var(--muted);
-    }
-    .tab[aria-selected="true"] .badge { background: white; }
-
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
-
-    .panel-header {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 0.6rem;
-      font-size: 0.9rem;
-      color: var(--muted);
-    }
-    .panel-header .grow { flex: 1; }
-
-    /* CSV preview table */
-    .table-wrap {
-      max-height: 340px;
-      overflow: auto;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-    }
-    table.preview {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85rem;
-      font-family: var(--mono);
-    }
-    table.preview thead th {
-      position: sticky;
-      top: 0;
-      background: var(--surface-muted);
-      border-bottom: 1px solid var(--border);
-      padding: 0.5rem 0.75rem;
-      text-align: left;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-    table.preview tbody td {
-      padding: 0.4rem 0.75rem;
-      border-bottom: 1px solid var(--border);
-      white-space: nowrap;
-      max-width: 200px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    table.preview tbody tr:nth-child(even) { background: var(--surface-muted); }
-    table.preview tbody tr:hover { background: #f1f8ff; }
-
-    .preview-meta { font-size: 0.8rem; color: var(--muted); margin-top: 0.4rem; }
-    .preview-empty { padding: 1rem; color: var(--muted); font-size: 0.9rem; }
-
-    /* JSON preview */
-    pre.json-preview {
-      max-height: 340px;
-      overflow: auto;
-      margin: 0;
-      padding: 0.85rem;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--code-bg);
-      font-family: var(--mono);
-      font-size: 0.8rem;
-    }
-
-    /* History */
-    .history-list { display: flex; flex-direction: column; gap: 0.5rem; }
-    .history-row {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 0.65rem;
-      padding: 0.55rem 0.85rem;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface-muted);
-      font-size: 0.88rem;
-    }
-    .history-row .name { font-weight: 600; flex: 1; min-width: 140px; }
-    .history-row .meta { color: var(--muted); font-size: 0.8rem; }
-
-    /* Footer */
-    footer.app-footer {
-      margin-top: 2rem;
-      text-align: center;
-      font-size: 0.85rem;
-      color: var(--muted);
-    }
-    footer.app-footer a { color: var(--muted); }
-
-    /* small */
-    code, .mono { font-family: var(--mono); font-size: 0.85em; }
-  </style>
+  <meta name="color-scheme" content="light" />
+  <meta name="description" content="Thresh — privacy-first spreadsheet ETL." />
+  <title>Thresh</title>
+  <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <div class="page">
 
-    <header class="app-header">
-      <h1>Clinisync</h1>
-      <p>Upload a clinical Excel workbook and get back de-identified, per-sheet CSVs ready for analysis.</p>
-    </header>
+  <nav class="site-nav">
+    <a class="brand" href="/" aria-label="Thresh home">
+      <svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
+        <rect x="4"  y="6"  width="24" height="3" rx="1.5" fill="currentColor" />
+        <rect x="7"  y="14" width="18" height="3" rx="1.5" fill="currentColor" opacity="0.55" />
+        <rect x="11" y="22" width="10" height="3" rx="1.5" fill="currentColor" opacity="0.3" />
+      </svg>
+      <span class="wordmark">Thresh</span>
+    </a>
+    <div class="nav-links">
+      <a href="https://devilsdev.github.io/csv_procedure/" target="_blank" rel="noreferrer">Docs</a>
+      <a href="https://devilsdev.github.io/csv_procedure/tool/" target="_blank" rel="noreferrer">In-browser tool</a>
+      <a href="https://github.com/DevilsDev/csv_procedure" target="_blank" rel="noreferrer">GitHub</a>
+    </div>
+  </nav>
+
+  <main class="page">
+
+    <section class="hero">
+      <span class="eyebrow"><span class="dot"></span>Local server · ETL pipeline</span>
+      <h1>Clean spreadsheets, get back analysis-ready CSVs.</h1>
+      <p class="lede">This Thresh server runs the full ETL pipeline behind a single <code>POST&nbsp;/upload</code> endpoint. Drop a workbook in below to see the same flow as the API.</p>
+    </section>
 
     <details class="card" id="rulesCard">
       <summary>What gets cleaned</summary>
-      <p class="card-subtitle" style="margin-top:0.75rem;">
-        These rules apply automatically to every sheet in your upload. The output never contains the original NHI, DOB, address, or contact details.
+      <p class="card-subtitle" style="margin-top:0.85rem;">
+        These rules apply to every sheet in your workbook. They ship with healthcare-friendly defaults but the underlying engine is general-purpose.
       </p>
       <div class="rules-grid">
         <div class="rule">
@@ -382,7 +70,8 @@
       <p class="card-subtitle">Up to 5 MB. Accepted formats: <code>.xlsx</code>, <code>.xls</code>, <code>.ods</code>.</p>
 
       <div class="drop-zone" id="dropZone">
-        <p>Drag &amp; drop an Excel file here, or click to choose one</p>
+        <p>Drag &amp; drop a spreadsheet, or click to choose one</p>
+        <span class="hint">Sent to this Thresh server, processed, and removed once the response is generated.</span>
         <input type="file" id="fileInput" accept=".xlsx,.xls,.ods" />
       </div>
       <div class="selected-file" id="selectedFile" hidden></div>
@@ -392,7 +81,7 @@
       </div>
       <div class="controls">
         <button id="uploadBtn" class="btn-primary">Upload &amp; clean</button>
-        <button id="sampleBtn" class="btn-secondary" type="button">Try with sample workbook</button>
+        <button id="sampleBtn" class="btn-secondary" type="button">Try with a sample workbook</button>
         <button id="removeBtn" class="btn-danger" type="button" hidden>Remove selection</button>
       </div>
 
@@ -417,13 +106,17 @@
     </div>
 
     <footer class="app-footer">
-      Clinisync &middot;
-      <a href="https://devilsdev.github.io/csv_procedure/" target="_blank" rel="noreferrer">Documentation</a>
-      &middot;
-      <a href="https://github.com/DevilsDev/csv_procedure" target="_blank" rel="noreferrer">GitHub</a>
+      <div class="row">Thresh is a privacy-first ETL companion. Open source, MIT licensed.</div>
+      <div class="row">
+        <a href="https://devilsdev.github.io/csv_procedure/" target="_blank" rel="noreferrer">Documentation</a>
+        &nbsp;·&nbsp;
+        <a href="https://devilsdev.github.io/csv_procedure/tool/" target="_blank" rel="noreferrer">Try without a server</a>
+        &nbsp;·&nbsp;
+        <a href="https://github.com/DevilsDev/csv_procedure" target="_blank" rel="noreferrer">GitHub</a>
+      </div>
     </footer>
 
-  </div>
+  </main>
 
   <script src="/js/upload.js"></script>
 </body>

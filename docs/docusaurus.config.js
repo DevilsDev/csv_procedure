@@ -7,8 +7,8 @@
  */
 
 export default {
-  title: 'Clinisync Docs',
-  tagline: 'Clean. Convert. Protect.',
+  title: 'Thresh',
+  tagline: 'Spreadsheet de-identification, in your browser.',
   url: 'https://devilsdev.github.io',
   baseUrl: '/csv_procedure/',
   onBrokenLinks: 'throw',
@@ -29,11 +29,10 @@ export default {
 
   themeConfig: {
     navbar: {
-      title: 'Clinisync Docs',
+      title: 'Thresh',
       logo: {
-        alt: 'Clinisync Logo',
-        src: 'img/clinisync-logo-final.svg',
-        srcDark: 'img/clinisync-darkmode.png',
+        alt: 'Thresh',
+        src: 'img/thresh-mark.svg',
       },
       items: [
         {
@@ -70,7 +69,7 @@ export default {
           ],
         },
       ],
-      copyright: `© ${new Date().getFullYear()} Clinisync by Ali Kahwaji`,
+      copyright: `© ${new Date().getFullYear()} Thresh by Ali Kahwaji · MIT licensed`,
     },
   },
 

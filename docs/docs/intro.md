@@ -3,9 +3,11 @@ id: intro
 title: Welcome
 ---
 
-# Welcome to Clinisync
+# Welcome to Thresh
 
-Clinisync is a small, opinionated ETL service that takes spreadsheet exports of clinical data and returns de-identified CSVs ready for analysis. It runs as an Express server with a `POST /upload` endpoint and a thin browser UI.
+Thresh is a small, opinionated ETL service that takes spreadsheet exports of structured data and returns de-identified CSVs ready for analysis. It runs as an Express server with a `POST /upload` endpoint and a thin browser UI, and ships with a fully in-browser demo on GitHub Pages that processes files locally without any server round-trip.
+
+The cleaning rules ship with healthcare-friendly defaults (NHI anonymization, DOB → Age, drop Address/Contact) but the underlying engine is general-purpose — the rules are a small, testable module you can extend or replace for any tabular-data cleaning workflow.
 
 It is **not** a general-purpose data warehouse, a HIPAA-certified product, or a managed service — it is the cleaning layer that sits in front of one.
 
@@ -35,6 +37,7 @@ A self-contained version of the cleaner — same rules, no server — runs entir
 
 | You want to… | Read |
 | --- | --- |
+| Try it in your browser | [/tool/](pathname:///csv_procedure/tool/) |
 | Call the API | [API - Upload Endpoint](/api-upload), [API Examples](/api/examples) |
 | Understand the cleaning rules | [Data Cleaning Rules](/cleaning-rules), [Field details](/cleaning/fields) |
 | Run it locally | [Project Scope](/about/project-scope), [Technology](/about/technology) |

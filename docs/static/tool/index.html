@@ -1,8 +1,7 @@
 <!--
-  Version: 2.6.1
-  Description: Self-contained Clinisync demo. The entire ETL runs in the browser —
-               nothing is uploaded, nothing is stored on disk, no server is contacted
-               after the page itself loads. Hosted on GitHub Pages alongside the docs.
+  Version: 2.7.0
+  Description: Thresh — self-contained, in-browser spreadsheet de-identification.
+               No data leaves the page. Hosted on GitHub Pages alongside the docs.
   Author: Ali Kahwaji
 -->
 <!DOCTYPE html>
@@ -11,29 +10,45 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="referrer" content="no-referrer" />
-  <title>Clinisync · Try the cleaner</title>
+  <meta name="color-scheme" content="light" />
+  <meta name="description" content="Strip identifiers from spreadsheets in your browser. No upload, no server." />
+  <title>Thresh — spreadsheet de-identification, in your browser</title>
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
-  <div class="page">
 
-    <header class="app-header">
-      <div class="title-row">
-        <h1>Clinisync</h1>
-        <span class="privacy-badge" title="Everything runs locally in this browser tab. No data is uploaded.">In-browser · No data leaves your computer</span>
-      </div>
-      <p>Drop a clinical Excel workbook in below and the cleaning rules run on your machine. Cleaned CSVs and the manifest are produced as downloads — there is no server in this version.</p>
-    </header>
+  <nav class="site-nav">
+    <a class="brand" href="./" aria-label="Thresh home">
+      <svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
+        <rect x="4"  y="6"  width="24" height="3" rx="1.5" fill="currentColor" />
+        <rect x="7"  y="14" width="18" height="3" rx="1.5" fill="currentColor" opacity="0.55" />
+        <rect x="11" y="22" width="10" height="3" rx="1.5" fill="currentColor" opacity="0.3" />
+      </svg>
+      <span class="wordmark">Thresh</span>
+    </a>
+    <div class="nav-links">
+      <a href="../">Docs</a>
+      <a href="https://github.com/DevilsDev/csv_procedure" target="_blank" rel="noreferrer">GitHub</a>
+    </div>
+  </nav>
+
+  <main class="page">
+
+    <section class="hero">
+      <span class="eyebrow"><span class="dot"></span>Runs entirely in your browser</span>
+      <h1>Spreadsheet de-identification, in your browser.</h1>
+      <p class="lede">Drop in an Excel workbook. Thresh strips sensitive columns, anonymizes identifiers, converts dates of birth to ages, and gives you a clean per-sheet CSV. Your file never leaves this page.</p>
+    </section>
 
     <details class="card" id="rulesCard">
       <summary>What gets cleaned</summary>
-      <p class="card-subtitle" style="margin-top:0.75rem;">
-        These rules apply to every sheet in your workbook. The output never contains the original NHI, DOB, address, or contact details.
+      <p class="card-subtitle" style="margin-top:0.85rem;">
+        These rules apply to every sheet in your workbook. They ship with healthcare-friendly defaults but the underlying engine is general-purpose — see the <a href="../">docs</a> for how to extend or replace them.
       </p>
       <div class="rules-grid">
         <div class="rule">
           <strong>NHI &rarr; ID</strong>
-          <span>Replaced with sequential anonymized IDs (<code>ID-001</code>, <code>ID-002</code>, &hellip;) shared across sheets in the same upload.</span>
+          <span>Replaced with sequential anonymized IDs (<code>ID-001</code>, <code>ID-002</code>, &hellip;) shared across sheets in the same workbook.</span>
         </div>
         <div class="rule">
           <strong>DOB &rarr; Age</strong>
@@ -55,14 +70,15 @@
       <p class="card-subtitle">Up to 5 MB. Accepted formats: <code>.xlsx</code>, <code>.xls</code>, <code>.ods</code>.</p>
 
       <div class="drop-zone" id="dropZone">
-        <p>Drag &amp; drop an Excel file here, or click to choose one</p>
+        <p>Drag &amp; drop a spreadsheet, or click to choose one</p>
+        <span class="hint">Nothing is uploaded — files are processed locally in this tab.</span>
         <input type="file" id="fileInput" accept=".xlsx,.xls,.ods" />
       </div>
       <div class="selected-file" id="selectedFile" hidden></div>
 
       <div class="controls">
         <button id="uploadBtn" class="btn-primary">Clean</button>
-        <button id="sampleBtn" class="btn-secondary" type="button">Try with sample workbook</button>
+        <button id="sampleBtn" class="btn-secondary" type="button">Try with a sample workbook</button>
         <button id="removeBtn" class="btn-danger" type="button" hidden>Remove selection</button>
       </div>
 
@@ -87,13 +103,17 @@
     </div>
 
     <footer class="app-footer">
-      Clinisync &middot;
-      <a href="../">Documentation</a>
-      &middot;
-      <a href="https://github.com/DevilsDev/csv_procedure" target="_blank" rel="noreferrer">GitHub</a>
+      <div class="row">Thresh is a privacy-first ETL companion. Open source, MIT licensed.</div>
+      <div class="row">
+        <a href="../">Documentation</a>
+        &nbsp;·&nbsp;
+        <a href="https://github.com/DevilsDev/csv_procedure" target="_blank" rel="noreferrer">GitHub</a>
+        &nbsp;·&nbsp;
+        <a href="https://github.com/DevilsDev/csv_procedure/issues" target="_blank" rel="noreferrer">Report an issue</a>
+      </div>
     </footer>
 
-  </div>
+  </main>
 
   <script src="./xlsx.full.min.js"></script>
   <script src="./etl.js"></script>
