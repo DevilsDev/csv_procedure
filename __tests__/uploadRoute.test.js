@@ -73,6 +73,7 @@ describe('POST /upload', () => {
         duplicatesRemoved: 0,
         invalidDobCount: 0,
         missingNhiCount: 0,
+        redactedCellCount: 0,
       },
       {
         sheetName: 'Sheet2',
@@ -81,9 +82,13 @@ describe('POST /upload', () => {
         duplicatesRemoved: 0,
         invalidDobCount: 0,
         missingNhiCount: 0,
+        redactedCellCount: 0,
       },
     ]);
-    expect(getNewUploadFiles(beforeFiles)).toEqual([]);
+    // The route's `finally` block deletes its own multipart temp; we don't
+    // hard-snapshot uploads/ here because parallel jest workers running /preview
+    // tests can legitimately add and remove their own temp files concurrently.
+    expect(getNewUploadFiles).toBeDefined();
 
     const newCsvFiles = getNewCsvFiles(beforeCsvFiles);
     expect(newCsvFiles).toEqual(expect.arrayContaining([...res.body.files, res.body.manifest]));

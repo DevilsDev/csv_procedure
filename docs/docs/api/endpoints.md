@@ -9,8 +9,10 @@ The HTTP surface is intentionally small — Clinisync exposes one upload endpoin
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `POST` | `/upload` | Accept a multipart spreadsheet upload and return JSON describing the cleaned per-sheet CSVs and manifest. See [Upload Endpoint](/api-upload). |
-| `GET` | `/` (and any other static file) | Serves the browser UI from `public/` — drag-and-drop form, optional API key field, JSON-aware result rendering. |
+| `POST` | `/upload` | Accept a multipart spreadsheet upload, write per-sheet CSVs + a manifest, and return JSON describing them. See [Upload Endpoint](/api-upload). |
+| `POST` | `/preview` | Dry-run: identical pipeline to `/upload` but writes nothing. Returns the same JSON shape minus `files` / `manifest`, plus a `previewRows` block per sheet (capped at 25 rows) so you can inspect the cleaning before committing. |
+| `GET` | `/downloads/:filename` | Returns a previously generated CSV or manifest. Strict filename allowlist (only files produced by the load step), gated on the same auth as `/upload`. |
+| `GET` | `/` (and any other static file) | Serves the browser UI from `public/`. |
 
 There is no `GET /logs`, no list endpoint for past uploads, and no individual download endpoint. Cleaned CSVs and the manifest are returned by filename in the `/upload` response and can be retrieved out-of-band from the `csvs/` directory while they exist (see retention below).
 

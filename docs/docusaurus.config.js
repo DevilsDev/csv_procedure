@@ -28,7 +28,7 @@ export default {
   },
 
   themeConfig: {
-    image: 'img/og-card.svg',
+    image: 'img/og-card.png',
     metadata: [
       { name: 'keywords', content: 'spreadsheet, ETL, de-identification, anonymization, CSV, Excel, privacy, data cleaning, healthcare data, HIPAA, PHI, NHI, in-browser, open source' },
       { name: 'author', content: 'Ali Kahwaji' },

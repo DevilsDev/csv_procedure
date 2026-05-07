@@ -16,22 +16,22 @@
       <rect x="8"  y="22" width="48" height="8" rx="4" fill="#2563eb" opacity="0.55"/>
       <rect x="20" y="44" width="24" height="8" rx="4" fill="#2563eb" opacity="0.3"/>
     </g>
-    <text x="92" y="46" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif" font-size="56" font-weight="700" fill="#0f172a" letter-spacing="-2">Thresh</text>
+    <text x="92" y="50" font-family="Arial, Helvetica, sans-serif" font-size="56" font-weight="700" fill="#0f172a">Thresh</text>
   </g>
 
   <!-- Headline -->
-  <text x="80" y="320" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif" font-size="72" font-weight="700" fill="#0f172a" letter-spacing="-3">Spreadsheet</text>
-  <text x="80" y="408" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif" font-size="72" font-weight="700" fill="#0f172a" letter-spacing="-3">de-identification,</text>
-  <text x="80" y="496" font-family="Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif" font-size="72" font-weight="700" fill="#2563eb" letter-spacing="-3">in your browser.</text>
+  <text x="80" y="320" font-family="Arial, Helvetica, sans-serif" font-size="68" font-weight="700" fill="#0f172a">Spreadsheet</text>
+  <text x="80" y="408" font-family="Arial, Helvetica, sans-serif" font-size="68" font-weight="700" fill="#0f172a">de-identification,</text>
+  <text x="80" y="496" font-family="Arial, Helvetica, sans-serif" font-size="68" font-weight="700" fill="#2563eb">in your browser.</text>
 
   <!-- Footer -->
-  <text x="80" y="570" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="22" fill="#475569">devilsdev.github.io/csv_procedure</text>
+  <text x="80" y="570" font-family="Consolas, 'Courier New', monospace" font-size="22" fill="#475569">devilsdev.github.io/csv_procedure</text>
 
   <!-- Decorative bars on the right -->
-  <g transform="translate(960,200)" opacity="0.18">
-    <rect x="0"  y="0"   width="160" height="14" rx="7" fill="#2563eb"/>
-    <rect x="20" y="36"  width="120" height="14" rx="7" fill="#2563eb"/>
-    <rect x="40" y="72"  width="80"  height="14" rx="7" fill="#2563eb"/>
-    <rect x="60" y="108" width="40"  height="14" rx="7" fill="#2563eb"/>
+  <g transform="translate(960,200)" opacity="0.2">
+    <rect x="0"   y="0"   width="160" height="14" rx="7" fill="#2563eb"/>
+    <rect x="20"  y="36"  width="120" height="14" rx="7" fill="#2563eb"/>
+    <rect x="40"  y="72"  width="80"  height="14" rx="7" fill="#2563eb"/>
+    <rect x="60"  y="108" width="40"  height="14" rx="7" fill="#2563eb"/>
   </g>
 </svg>

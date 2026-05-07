@@ -488,6 +488,53 @@ pre.json-preview {
 
 /* ---------- History ---------- */
 
+/* ---------- Rules editor ---------- */
+
+.rules-editor {
+  width: 100%;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--code-bg);
+  color: var(--text);
+  resize: vertical;
+  min-height: 220px;
+}
+.rules-editor:focus {
+  border-color: var(--accent);
+  outline: none;
+  background: var(--surface);
+}
+.rules-status {
+  margin-top: 0.65rem;
+  font-size: 0.85rem;
+  min-height: 1.1rem;
+  color: var(--text-subtle);
+  font-family: var(--mono);
+}
+.rules-status.error { color: var(--danger); }
+.rules-status.success { color: var(--success); }
+.rules-pill {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.5rem;
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-subtle);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.rules-pill.custom {
+  background: var(--accent-soft);
+  border-color: rgba(37, 99, 235, 0.25);
+  color: var(--accent);
+}
+
 .history-list { display: flex; flex-direction: column; gap: 0.5rem; }
 .history-row {
   display: flex;

@@ -1,12 +1,11 @@
 /**
- * Version: 2.6.1
- * Description: Browser-side ETL pipeline. Mirrors src/etl/transform.js and
- *              src/etl/idMapper.js so the cleaning rules behave identically to the
- *              server. When you change the server-side rules, mirror the change here.
+ * Version: 2.7.4
+ * Description: Browser-side ETL pipeline. Mirrors src/etl/transform.js, src/etl/idMapper.js,
+ *              and src/etl/rules.js so the cleaning rules behave identically to the server.
+ *              When you change the server-side rules, mirror the change here.
  *
- *              This file is intentionally self-contained and exposes a single global,
- *              window.ClinisyncETL. It depends on the xlsx library being loaded first
- *              (window.XLSX from xlsx.full.min.js).
+ *              Self-contained: depends only on the xlsx library being loaded first
+ *              (window.XLSX from xlsx.full.min.js). Exposes window.ClinisyncETL.
  *
  *              No data leaves the browser. Workbooks are parsed via XLSX.read on an
  *              in-memory ArrayBuffer; cleaned CSVs are produced as strings and handed
@@ -17,15 +16,98 @@
 (function (global) {
   'use strict';
 
-  // ---------- helpers shared with server transform.js ----------
+  // ===== Default rule set (mirror of src/etl/rules.js) =====
 
-  function isMissingNhi(value) {
-    return typeof value !== 'string' || value.trim() === '';
+  const DEFAULT_RULE_SET = {
+    version: '1',
+    rules: [
+      { match: { empty: true },           action: 'drop' },
+      { match: { startsWith: 'column' },  action: 'drop' },
+      { match: { equals: 'nhi' },         action: 'anonymize',   outputName: 'ID' },
+      { match: { equals: 'dob' },         action: 'ageFromDate', outputName: 'Age' },
+      { match: { equals: 'contact' },     action: 'drop' },
+      { match: { equals: 'address' },     action: 'drop' },
+    ],
+  };
+
+  const VALID_ACTIONS = new Set(['drop', 'keep', 'rename', 'redact', 'anonymize', 'ageFromDate']);
+  const VALID_MATCH_KEYS = new Set(['empty', 'equals', 'startsWith', 'contains', 'regex']);
+
+  function isString(v) { return typeof v === 'string'; }
+
+  function normalizeHeader(value) {
+    return String(value == null ? '' : value).trim().toLowerCase();
   }
 
-  function isBlankCell(value) {
-    return value === null || value === undefined || value === '';
+  function validateRuleSet(rs) {
+    if (!rs || typeof rs !== 'object') throw new Error('Rule set must be an object.');
+    if (!Array.isArray(rs.rules)) throw new Error('Rule set must have a "rules" array.');
+    rs.rules.forEach(function (rule, idx) {
+      if (!rule || typeof rule !== 'object') throw new Error('rules[' + idx + '] must be an object.');
+      if (!rule.match || typeof rule.match !== 'object') throw new Error('rules[' + idx + '] missing "match".');
+      const matchKeys = Object.keys(rule.match);
+      if (matchKeys.length !== 1 || !VALID_MATCH_KEYS.has(matchKeys[0])) {
+        throw new Error('rules[' + idx + '] match must have exactly one of: ' + Array.from(VALID_MATCH_KEYS).join(', '));
+      }
+      if (!VALID_ACTIONS.has(rule.action)) {
+        throw new Error('rules[' + idx + '] action must be one of: ' + Array.from(VALID_ACTIONS).join(', '));
+      }
+      if ((rule.action === 'anonymize' || rule.action === 'ageFromDate' || rule.action === 'rename')
+          && !isString(rule.outputName)) {
+        throw new Error('rules[' + idx + '] action "' + rule.action + '" requires "outputName" string.');
+      }
+      if (rule.action === 'redact' && !isString(rule.replaceWith)) {
+        throw new Error('rules[' + idx + '] action "redact" requires "replaceWith" string.');
+      }
+      if (matchKeys[0] === 'regex') {
+        try { new RegExp(rule.match.regex, 'i'); }
+        catch (err) { throw new Error('rules[' + idx + '] regex is invalid: ' + err.message); }
+      }
+    });
+    return rs;
   }
+
+  function buildMatcher(match) {
+    if ('empty' in match) {
+      return match.empty ? function (h) { return h === ''; } : function () { return false; };
+    }
+    if ('equals' in match) {
+      const target = normalizeHeader(match.equals);
+      return function (h) { return h === target; };
+    }
+    if ('startsWith' in match) {
+      const target = String(match.startsWith).toLowerCase();
+      return function (h) { return h.startsWith(target); };
+    }
+    if ('contains' in match) {
+      const target = String(match.contains).toLowerCase();
+      return function (h) { return h.indexOf(target) !== -1; };
+    }
+    if ('regex' in match) {
+      const re = new RegExp(match.regex, 'i');
+      return function (h) { return re.test(h); };
+    }
+    return function () { return false; };
+  }
+
+  function compileRuleSet(ruleSet) {
+    validateRuleSet(ruleSet);
+    const compiled = ruleSet.rules.map(function (rule) {
+      return { matcher: buildMatcher(rule.match), rule: rule };
+    });
+    return function lookup(rawHeader) {
+      const norm = normalizeHeader(rawHeader);
+      for (let i = 0; i < compiled.length; i++) {
+        if (compiled[i].matcher(norm)) return compiled[i].rule;
+      }
+      return { action: 'keep' };
+    };
+  }
+
+  // ===== Helpers shared with server transform.js =====
+
+  function isMissingNhi(value) { return typeof value !== 'string' || value.trim() === ''; }
+  function isBlankCell(value)  { return value === null || value === undefined || value === ''; }
 
   function getEmptyStats() {
     return {
@@ -33,6 +115,7 @@
       duplicatesRemoved: 0,
       invalidDobCount: 0,
       missingNhiCount: 0,
+      redactedCellCount: 0,
     };
   }
 
@@ -52,7 +135,7 @@
     }
   }
 
-  // ---------- idMapper (mirror of server) ----------
+  // ===== idMapper (mirror of server) =====
 
   function createIdMapper() {
     const map = new Map();
@@ -70,35 +153,40 @@
     };
   }
 
-  // ---------- transform (mirror of server) ----------
+  // ===== transform (mirror of server) =====
 
-  function transformSheetWithStats(rows, idMapper) {
+  function buildColumnPlan(rawHeader, lookup) {
+    const plan = [];
+    for (let i = 0; i < rawHeader.length; i++) {
+      const matched = lookup(rawHeader[i]);
+      if (matched.action === 'drop') {
+        plan.push(null);
+        continue;
+      }
+      plan.push({
+        action: matched.action,
+        outputName: matched.outputName != null ? matched.outputName : rawHeader[i],
+        replaceWith: matched.replaceWith,
+      });
+    }
+    return plan;
+  }
+
+  function transformSheetWithStats(rows, idMapper, options) {
     if (!Array.isArray(rows) || rows.length === 0) {
       return { rows: [], stats: getEmptyStats() };
     }
-
+    const opts = options || {};
+    const ruleSet = opts.ruleSet || DEFAULT_RULE_SET;
+    const lookup = compileRuleSet(ruleSet);
     const mapper = idMapper || createIdMapper();
+
     const rawHeader = rows[0];
+    const columnPlan = buildColumnPlan(rawHeader, lookup);
     const cleaned = [];
-    const columnMap = [];
     const stats = getEmptyStats();
 
-    for (let i = 0; i < rawHeader.length; i++) {
-      const rawCol = String(rawHeader[i] || '').trim().toLowerCase();
-      if (!rawCol || rawCol.indexOf('column') === 0) {
-        columnMap.push(null);
-      } else if (rawCol === 'nhi') {
-        columnMap.push('ID');
-      } else if (rawCol === 'dob') {
-        columnMap.push('Age');
-      } else if (rawCol === 'contact' || rawCol === 'address') {
-        columnMap.push(null);
-      } else {
-        columnMap.push(rawHeader[i]);
-      }
-    }
-
-    cleaned.push(columnMap.filter(Boolean));
+    cleaned.push(columnPlan.filter(Boolean).map(function (p) { return p.outputName; }));
 
     const seen = new Set();
 
@@ -109,23 +197,35 @@
       stats.rowsProcessed += 1;
       const cleanedRow = [];
 
-      for (let j = 0; j < columnMap.length; j++) {
-        const label = columnMap[j];
-        if (!label) continue;
+      for (let j = 0; j < columnPlan.length; j++) {
+        const plan = columnPlan[j];
+        if (!plan) continue;
         const cellValue = rawRow[j];
-        if (label === 'ID') {
-          if (isMissingNhi(cellValue)) {
-            stats.missingNhiCount += 1;
-            cleanedRow.push('');
-          } else {
-            cleanedRow.push(mapper.getAnonymizedId(cellValue));
+
+        switch (plan.action) {
+          case 'anonymize':
+            if (isMissingNhi(cellValue)) {
+              stats.missingNhiCount += 1;
+              cleanedRow.push('');
+            } else {
+              cleanedRow.push(mapper.getAnonymizedId(cellValue));
+            }
+            break;
+          case 'ageFromDate': {
+            const age = calculateAgeFromDOB(cellValue);
+            if (age === '' && !isBlankCell(cellValue)) stats.invalidDobCount += 1;
+            cleanedRow.push(age);
+            break;
           }
-        } else if (label === 'Age') {
-          const age = calculateAgeFromDOB(cellValue);
-          if (age === '' && !isBlankCell(cellValue)) stats.invalidDobCount += 1;
-          cleanedRow.push(age);
-        } else {
-          cleanedRow.push(cellValue);
+          case 'redact':
+            if (!isBlankCell(cellValue)) stats.redactedCellCount += 1;
+            cleanedRow.push(plan.replaceWith);
+            break;
+          case 'rename':
+          case 'keep':
+          default:
+            cleanedRow.push(cellValue);
+            break;
         }
       }
 
@@ -141,7 +241,7 @@
     return { rows: cleaned, stats: stats };
   }
 
-  // ---------- browser-only helpers ----------
+  // ===== Browser-only helpers =====
 
   function extractSheets(arrayBuffer) {
     if (!global.XLSX) throw new Error('xlsx library not loaded');
@@ -149,13 +249,8 @@
     const extracted = [];
     for (let i = 0; i < workbook.SheetNames.length; i++) {
       const name = workbook.SheetNames[i];
-      const rawRows = global.XLSX.utils.sheet_to_json(workbook.Sheets[name], {
-        header: 1,
-        defval: '',
-      });
-      if (Array.isArray(rawRows) && rawRows.length > 0) {
-        extracted.push({ name: name, rows: rawRows });
-      }
+      const rawRows = global.XLSX.utils.sheet_to_json(workbook.Sheets[name], { header: 1, defval: '' });
+      if (Array.isArray(rawRows) && rawRows.length > 0) extracted.push({ name: name, rows: rawRows });
     }
     return extracted;
   }
@@ -168,29 +263,22 @@
 
   function sanitizeName(value, fallback) {
     return String(value || '')
-      .trim()
-      .toLowerCase()
+      .trim().toLowerCase()
       .replace(/[^a-z0-9]/gi, '_')
       .replace(/^_+|_+$/g, '')
       .replace(/_+/g, '_') || fallback;
   }
 
   function makeFilename(sourceBase, sheetName, counter, timestamp) {
-    const safeBase = sanitizeName(sourceBase, 'workbook');
-    const safeSheet = sanitizeName(sheetName, 'sheet');
-    return 'converted-' + safeBase + '-' + timestamp + '-' + counter + '-' + safeSheet + '.csv';
+    return 'converted-' + sanitizeName(sourceBase, 'workbook') + '-' + timestamp + '-' + counter + '-' + sanitizeName(sheetName, 'sheet') + '.csv';
   }
 
   function manifestFilename(sourceBase, counter, timestamp) {
-    const safeBase = sanitizeName(sourceBase, 'workbook');
-    return 'manifest-' + safeBase + '-' + timestamp + '-' + counter + '.json';
+    return 'manifest-' + sanitizeName(sourceBase, 'workbook') + '-' + timestamp + '-' + counter + '.json';
   }
 
-  /**
-   * Run the full pipeline against an in-memory ArrayBuffer.
-   * Returns a structured result that upload.js renders directly — no network round-trip.
-   */
-  function processWorkbook(arrayBuffer, sourceFileName) {
+  function processWorkbook(arrayBuffer, sourceFileName, options) {
+    options = options || {};
     const idMapper = createIdMapper();
     const sheets = extractSheets(arrayBuffer);
     const sourceBase = String(sourceFileName || 'workbook').replace(/\.[^.]+$/, '');
@@ -202,6 +290,7 @@
       duplicatesRemoved: 0,
       invalidDobCount: 0,
       missingNhiCount: 0,
+      redactedCellCount: 0,
     };
 
     const sheetOutputs = [];
@@ -210,7 +299,7 @@
     for (let i = 0; i < sheets.length; i++) {
       counter += 1;
       const sheet = sheets[i];
-      const result = transformSheetWithStats(sheet.rows, idMapper);
+      const result = transformSheetWithStats(sheet.rows, idMapper, { ruleSet: options.ruleSet });
       const csv = csvFromRows(result.rows);
       const fileName = makeFilename(sourceBase, sheet.name, counter, timestamp);
 
@@ -218,11 +307,12 @@
         sheetName: sheet.name,
         fileName: fileName,
         csv: csv,
-        rows: result.rows, // already 2-D for the in-page preview
+        rows: result.rows,
         rowsProcessed: result.stats.rowsProcessed,
         duplicatesRemoved: result.stats.duplicatesRemoved,
         invalidDobCount: result.stats.invalidDobCount,
         missingNhiCount: result.stats.missingNhiCount,
+        redactedCellCount: result.stats.redactedCellCount,
       });
 
       summary.sheetsProcessed += 1;
@@ -230,33 +320,31 @@
       summary.duplicatesRemoved += result.stats.duplicatesRemoved;
       summary.invalidDobCount += result.stats.invalidDobCount;
       summary.missingNhiCount += result.stats.missingNhiCount;
+      summary.redactedCellCount += result.stats.redactedCellCount;
     }
 
     counter += 1;
     const manifestName = manifestFilename(sourceBase, counter, timestamp);
-    const manifest = Object.assign(
-      {
-        sourceFileName: sourceFileName,
-        generatedAt: new Date().toISOString(),
-      },
-      summary,
-      {
-        files: sheetOutputs.map(function (s) { return s.fileName; }),
-        sheets: sheetOutputs.map(function (s) {
-          return {
-            sheetName: s.sheetName,
-            fileName: s.fileName,
-            rowsProcessed: s.rowsProcessed,
-            duplicatesRemoved: s.duplicatesRemoved,
-            invalidDobCount: s.invalidDobCount,
-            missingNhiCount: s.missingNhiCount,
-          };
-        }),
-      }
-    );
+    const manifest = Object.assign({
+      sourceFileName: sourceFileName,
+      generatedAt: new Date().toISOString(),
+    }, summary, {
+      files: sheetOutputs.map(function (s) { return s.fileName; }),
+      sheets: sheetOutputs.map(function (s) {
+        return {
+          sheetName: s.sheetName,
+          fileName: s.fileName,
+          rowsProcessed: s.rowsProcessed,
+          duplicatesRemoved: s.duplicatesRemoved,
+          invalidDobCount: s.invalidDobCount,
+          missingNhiCount: s.missingNhiCount,
+          redactedCellCount: s.redactedCellCount,
+        };
+      }),
+    });
 
     return {
-      message: 'Upload and transformation completed successfully.',
+      message: 'Cleaning completed successfully.',
       sheets: sheetOutputs,
       manifest: { name: manifestName, json: manifest },
       summary: summary,
@@ -264,12 +352,16 @@
   }
 
   global.ClinisyncETL = {
+    DEFAULT_RULE_SET: DEFAULT_RULE_SET,
+    validateRuleSet: validateRuleSet,
+    compileRuleSet: compileRuleSet,
     createIdMapper: createIdMapper,
     transformSheetWithStats: transformSheetWithStats,
     extractSheets: extractSheets,
     csvFromRows: csvFromRows,
     processWorkbook: processWorkbook,
     sanitizeName: sanitizeName,
+    normalizeHeader: normalizeHeader,
   };
 
 })(typeof window !== 'undefined' ? window : globalThis);

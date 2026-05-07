@@ -1,39 +1,35 @@
 /**
  * Version: 2.7.4
- * Description: Handles Excel file upload, runs ETL pipeline, returns cleaned CSV paths
- *              and the per-upload manifest. The transformer is driven by a configurable
- *              rule set; when CLINISYNC_RULES_PATH is set, that JSON file is loaded once
- *              at startup and used for every upload until the process restarts.
+ * Description: Dry-run preview endpoint. Runs the same ETL pipeline as /upload but writes
+ *              nothing to disk — useful for inspecting what a workbook will turn into
+ *              (especially after editing the configurable rule set) before committing to
+ *              the production cleaning run.
+ *
+ *              Response shape mirrors /upload but:
+ *                - no `files` / no `manifest` filenames, since nothing is persisted
+ *                - each sheet entry includes `previewRows` (capped at PREVIEW_LIMIT) so
+ *                  the caller can render the cleaned data inline
  * Author: Ali Kahwaji
  */
 
 const express = require('express');
-const path = require('path');
 const fs = require('fs');
 const extract = require('../etl/extract');
 const { transformSheetWithStats } = require('../etl/transform');
-const { writeCsvOutput, writeManifestOutput } = require('../etl/load');
 const { createIdMapper } = require('../etl/idMapper');
-const { sweepCsvDirectory } = require('../etl/retention');
 const { DEFAULT_RULE_SET, loadRuleSetFromPath } = require('../etl/rules');
 
 const router = express.Router();
+
+const PREVIEW_LIMIT = 25; // header + 24 data rows
 
 let cachedRuleSet = null;
 function getRuleSet() {
   if (cachedRuleSet) return cachedRuleSet;
   const customPath = process.env.CLINISYNC_RULES_PATH;
   if (customPath) {
-    try {
-      cachedRuleSet = loadRuleSetFromPath(customPath);
-      console.log(
-        '[rules] loaded custom rule set from %s (%d rules)',
-        customPath, cachedRuleSet.rules.length
-      );
-    } catch (err) {
-      console.warn('[rules] failed to load custom rule set, using defaults:', err.message);
-      cachedRuleSet = DEFAULT_RULE_SET;
-    }
+    try { cachedRuleSet = loadRuleSetFromPath(customPath); }
+    catch { cachedRuleSet = DEFAULT_RULE_SET; }
   } else {
     cachedRuleSet = DEFAULT_RULE_SET;
   }
@@ -54,9 +50,9 @@ function emptySummary() {
 function removeUploadedFile(filePath) {
   if (!filePath) return;
   try { fs.unlinkSync(filePath); }
-  catch (error) {
-    if (error.code !== 'ENOENT') {
-      console.warn(`Failed to remove uploaded file: ${filePath}`, error.message);
+  catch (err) {
+    if (err.code !== 'ENOENT') {
+      console.warn('[preview] failed to remove uploaded temp:', err.message);
     }
   }
 }
@@ -69,26 +65,30 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'No file uploaded.' });
     }
 
-    sweepCsvDirectory();
-
-    const idMapper = createIdMapper();
     const ruleSet = getRuleSet();
+    const idMapper = createIdMapper();
 
-    const baseName = path.parse(file.originalname).name;
     const sheets = extract.extractSheets(file.path);
-    const outputFiles = [];
     const sheetOutputs = [];
     const summary = emptySummary();
 
     for (const sheet of sheets) {
       const result = transformSheetWithStats(sheet.rows, idMapper, { ruleSet });
-      const outputPath = await writeCsvOutput(baseName, sheet.name, result.rows);
-      const fileName = path.basename(outputPath);
-      outputFiles.push(fileName);
+
+      // Cap the rows we ship back so a 5 MB workbook doesn't produce a 5 MB JSON response.
+      const cappedRows = result.rows.slice(0, PREVIEW_LIMIT);
+      const totalDataRows = Math.max(0, result.rows.length - 1);
+      const previewedDataRows = Math.max(0, cappedRows.length - 1);
+
       sheetOutputs.push({
         sheetName: sheet.name,
-        fileName,
         ...result.stats,
+        previewRows: cappedRows,
+        previewMeta: {
+          totalDataRows,
+          previewedDataRows,
+          truncated: previewedDataRows < totalDataRows,
+        },
       });
       summary.sheetsProcessed += 1;
       summary.rowsProcessed += result.stats.rowsProcessed;
@@ -98,31 +98,23 @@ router.post('/', async (req, res) => {
       summary.redactedCellCount += result.stats.redactedCellCount;
     }
 
-    const manifestPath = await writeManifestOutput(baseName, {
+    return res.status(200).json({
+      message: 'Preview generated. No files were written.',
       sourceFileName: file.originalname,
       generatedAt: new Date().toISOString(),
-      ...summary,
-      files: outputFiles,
-      sheets: sheetOutputs,
-    });
-    const manifestFile = path.basename(manifestPath);
-
-    return res.status(200).json({
-      message: 'Upload and transformation completed successfully.',
-      files: outputFiles,
-      manifest: manifestFile,
       sheets: sheetOutputs,
       ...summary,
+      previewLimit: PREVIEW_LIMIT,
+      dryRun: true,
     });
   } catch (error) {
-    console.error('ETL Error:', error.message);
-    return res.status(500).json({ error: 'An internal server error occurred while processing the Excel file.' });
+    console.error('[preview] ETL error:', error.message);
+    return res.status(500).json({ error: 'An internal server error occurred while previewing the workbook.' });
   } finally {
-    removeUploadedFile(file?.path);
+    removeUploadedFile(file && file.path);
   }
 });
 
-// Allow tests to reset the cached rule set between scenarios.
 router._resetRuleSetCacheForTests = function () { cachedRuleSet = null; };
 
 module.exports = router;

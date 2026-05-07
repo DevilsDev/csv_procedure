@@ -28,7 +28,7 @@
   <meta property="og:title" content="Thresh — spreadsheet de-identification, in your browser" />
   <meta property="og:description" content="Strip identifiers, anonymize patient codes, convert DOB to age, and produce clean per-sheet CSVs. Runs entirely in your browser — no upload, no server." />
   <meta property="og:url" content="https://devilsdev.github.io/csv_procedure/tool/" />
-  <meta property="og:image" content="https://devilsdev.github.io/csv_procedure/img/og-card.svg" />
+  <meta property="og:image" content="https://devilsdev.github.io/csv_procedure/img/og-card.png" />
   <meta property="og:image:alt" content="Thresh — spreadsheet de-identification, in your browser." />
   <meta property="og:locale" content="en_US" />
 
@@ -36,7 +36,7 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Thresh — spreadsheet de-identification, in your browser" />
   <meta name="twitter:description" content="Strip identifiers, anonymize patient codes, convert DOB to age, and produce clean per-sheet CSVs. Runs entirely in your browser — no upload, no server." />
-  <meta name="twitter:image" content="https://devilsdev.github.io/csv_procedure/img/og-card.svg" />
+  <meta name="twitter:image" content="https://devilsdev.github.io/csv_procedure/img/og-card.png" />
 
   <link rel="stylesheet" href="./style.css" />
 
@@ -122,6 +122,19 @@
           <strong>Duplicates &amp; blanks</strong>
           <span>Exact-duplicate rows after transformation are removed. Empty rows and unnamed columns are skipped.</span>
         </div>
+      </div>
+    </details>
+
+    <details class="card" id="rulesEditorCard">
+      <summary>Custom rules <span class="rules-pill" id="rulesPill" aria-hidden="true">defaults</span></summary>
+      <p class="card-subtitle" style="margin-top:0.85rem;">
+        Edit the rule set as JSON. Match clauses: <code>equals</code>, <code>startsWith</code>, <code>contains</code>, <code>regex</code>, <code>empty</code>. Actions: <code>drop</code>, <code>keep</code>, <code>rename</code>, <code>redact</code>, <code>anonymize</code>, <code>ageFromDate</code>. First match wins. Unmatched columns are kept as-is.
+      </p>
+      <textarea id="rulesEditor" class="rules-editor" spellcheck="false" rows="14"></textarea>
+      <div class="rules-status" id="rulesStatus"></div>
+      <div class="controls">
+        <button class="btn-secondary" id="rulesValidateBtn" type="button">Validate</button>
+        <button class="btn-ghost" id="rulesResetBtn" type="button">Reset to defaults</button>
       </div>
     </details>
 

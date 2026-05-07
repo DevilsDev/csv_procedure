@@ -95,6 +95,7 @@ describe('transformSheet()', () => {
       duplicatesRemoved: 1,
       invalidDobCount: 1,
       missingNhiCount: 2,
+      redactedCellCount: 0,
     });
     expect(result.rows.length).toBe(4);
   });

@@ -11,6 +11,7 @@ const fs = require('fs');
 require('dotenv').config();
 
 const fileUploadRoute = require('./routes/fileUpload');
+const previewRoute = require('./routes/preview');
 const downloadsRoute = require('./routes/downloads');
 const rateLimit = require('./middleware/rateLimit');
 const apiKey = require('./middleware/apiKey');
@@ -87,6 +88,7 @@ function buildRateLimitStore() {
 const uploadLimiter = rateLimit({ windowMs: 60_000, max: 30, store: buildRateLimitStore() });
 
 app.use('/upload', uploadLimiter, uploadExcel, apiKey(), virusScan(), fileUploadRoute);
+app.use('/preview', uploadLimiter, uploadExcel, apiKey(), virusScan(), previewRoute);
 app.use('/downloads', apiKey(), downloadsRoute);
 
 app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars

@@ -29,6 +29,11 @@
   const panelsEl = document.getElementById('resultsPanels');
   const historyCardEl = document.getElementById('historyCard');
   const historyListEl = document.getElementById('historyList');
+  const rulesEditorEl = document.getElementById('rulesEditor');
+  const rulesStatusEl = document.getElementById('rulesStatus');
+  const rulesPillEl = document.getElementById('rulesPill');
+  const rulesValidateBtn = document.getElementById('rulesValidateBtn');
+  const rulesResetBtn = document.getElementById('rulesResetBtn');
 
   // ----- Constants -----
   const MAX_BYTES = 5 * 1024 * 1024;
@@ -40,6 +45,7 @@
 
   // ----- State -----
   let selectedFile = null;
+  let activeRuleSet = null; // null = use defaults
   const history = [];
   let nextRunId = 1;
 
@@ -155,6 +161,15 @@
   }
 
   function processFile(file) {
+    // Validate the editor's rule set up front so we don't burn time on parsing
+    // before realizing the JSON is broken.
+    let ruleSet;
+    try { ruleSet = readRuleSet(); }
+    catch (err) {
+      setStatus('Custom rules invalid: ' + err.message, 'error');
+      return Promise.resolve();
+    }
+
     setStatus('Reading ' + file.name + '...');
     uploadButton.disabled = true;
     sampleButton.disabled = true;
@@ -170,7 +185,7 @@
         return new Promise(function (resolve) { setTimeout(function () { resolve(buf); }, 16); });
       })
       .then(function (buf) {
-        const result = window.ClinisyncETL.processWorkbook(buf, file.name);
+        const result = window.ClinisyncETL.processWorkbook(buf, file.name, { ruleSet: ruleSet });
         setStatus(result.message || 'Cleaning complete.', 'success');
         renderResults(result, file.name);
         pushHistory({ sourceName: file.name, result: result, ts: Date.now() });
@@ -437,6 +452,83 @@
       });
     });
   }
+
+  // ===== Rules editor =====
+
+  function defaultRulesText() {
+    return JSON.stringify(window.ClinisyncETL.DEFAULT_RULE_SET, null, 2);
+  }
+
+  function setRulesStatus(msg, kind) {
+    if (!rulesStatusEl) return;
+    rulesStatusEl.textContent = msg || '';
+    rulesStatusEl.className = 'rules-status' + (kind ? ' ' + kind : '');
+  }
+
+  function setRulesPill(custom) {
+    if (!rulesPillEl) return;
+    rulesPillEl.textContent = custom ? 'custom' : 'defaults';
+    rulesPillEl.classList.toggle('custom', !!custom);
+  }
+
+  /**
+   * Read the rule set from the editor. Returns:
+   *   - undefined when the editor matches the defaults (let the engine use its own)
+   *   - a validated rule-set object when the user has a custom one
+   * Throws if the textarea has invalid JSON or fails schema validation.
+   */
+  function readRuleSet() {
+    if (!rulesEditorEl) return activeRuleSet || undefined;
+    const text = rulesEditorEl.value.trim();
+    if (text === '' || text === defaultRulesText().trim()) {
+      activeRuleSet = null;
+      setRulesPill(false);
+      return undefined;
+    }
+    let parsed;
+    try { parsed = JSON.parse(text); }
+    catch (err) { throw new Error('JSON: ' + err.message); }
+    window.ClinisyncETL.validateRuleSet(parsed);
+    activeRuleSet = parsed;
+    setRulesPill(true);
+    return parsed;
+  }
+
+  function initRulesEditor() {
+    if (!rulesEditorEl) return;
+    if (rulesEditorEl.value.trim() === '') {
+      rulesEditorEl.value = defaultRulesText();
+    }
+    setRulesPill(false);
+
+    rulesEditorEl.addEventListener('input', function () {
+      // Clear any prior status when the user starts editing again.
+      setRulesStatus('');
+    });
+
+    if (rulesValidateBtn) {
+      rulesValidateBtn.addEventListener('click', function () {
+        try {
+          const rs = readRuleSet();
+          const count = rs ? rs.rules.length : window.ClinisyncETL.DEFAULT_RULE_SET.rules.length;
+          setRulesStatus('Valid · ' + count + ' rule' + (count === 1 ? '' : 's') + (rs ? ' (custom)' : ' (defaults)'), 'success');
+        } catch (err) {
+          setRulesStatus(err.message, 'error');
+        }
+      });
+    }
+
+    if (rulesResetBtn) {
+      rulesResetBtn.addEventListener('click', function () {
+        rulesEditorEl.value = defaultRulesText();
+        activeRuleSet = null;
+        setRulesPill(false);
+        setRulesStatus('Reset to defaults.', 'success');
+      });
+    }
+  }
+
+  initRulesEditor();
 
   // ===== Wire =====
 
