@@ -1,167 +1,307 @@
 /**
- * Clinisync Docs – Custom CSS
- * Version: 2.4.0
- * Description: Polished styles for a modern, clean and professional look
+ * Thresh Docs — custom theme
+ * Version: 2.7.1
+ * Description: Brings the Docusaurus / Infima default palette in line with the
+ *              Thresh visual identity used by the in-browser tool and the
+ *              server-served frontend. System-font stack with optional Inter, slate
+ *              palette, blue-600 accent. No external font requests.
  * Author: Ali Kahwaji
  */
 
-/* Fonts & Base */
+/* ---------- Tokens ---------- */
 
 :root {
-  --ifm-font-family-base: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --ifm-heading-font-weight: 600;
+  /* Typography */
+  --ifm-font-family-base: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, "Helvetica Neue", sans-serif;
+  --ifm-font-family-monospace: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   --ifm-font-size-base: 16px;
+  --ifm-line-height-base: 1.6;
+  --ifm-heading-font-weight: 600;
+  --ifm-heading-font-family: var(--ifm-font-family-base);
+
+  /* Brand colors — accent (blue-600) */
+  --ifm-color-primary: #2563eb;
+  --ifm-color-primary-dark: #1d4ed8;
+  --ifm-color-primary-darker: #1e40af;
+  --ifm-color-primary-darkest: #1e3a8a;
+  --ifm-color-primary-light: #3b82f6;
+  --ifm-color-primary-lighter: #60a5fa;
+  --ifm-color-primary-lightest: #93c5fd;
+
+  /* Neutral surface — slate */
+  --ifm-background-color: #ffffff;
+  --ifm-background-surface-color: #ffffff;
+  --ifm-color-content: #0f172a;            /* slate-900 */
+  --ifm-color-content-secondary: #475569;  /* slate-600 */
+  --ifm-color-emphasis-100: #f8fafc;       /* slate-50 */
+  --ifm-color-emphasis-200: #f1f5f9;       /* slate-100 */
+  --ifm-color-emphasis-300: #e2e8f0;       /* slate-200 */
+  --ifm-color-emphasis-400: #cbd5e1;       /* slate-300 */
+  --ifm-color-emphasis-600: #475569;       /* slate-600 */
+  --ifm-color-emphasis-700: #334155;       /* slate-700 */
+  --ifm-color-emphasis-800: #1e293b;       /* slate-800 */
+  --ifm-color-emphasis-900: #0f172a;       /* slate-900 */
+
+  --ifm-toc-border-color: var(--ifm-color-emphasis-200);
+  --ifm-hr-border-color: var(--ifm-color-emphasis-200);
+
+  /* Code */
+  --ifm-code-font-size: 0.88em;
+  --ifm-code-background: var(--ifm-color-emphasis-100);
+  --ifm-code-padding-horizontal: 0.35rem;
+  --ifm-code-padding-vertical: 0.1rem;
+  --ifm-code-border-radius: 4px;
+  --docusaurus-highlighted-code-line-bg: rgba(37, 99, 235, 0.08);
+
+  /* Layout */
+  --ifm-global-radius: 8px;
+  --ifm-button-border-radius: 6px;
+  --ifm-card-border-radius: 10px;
+  --ifm-global-shadow-lw: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --ifm-global-shadow-md: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 6px -1px rgba(15, 23, 42, 0.04);
+  --ifm-global-shadow-tl: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
+
+  /* Spacing */
+  --ifm-spacing-horizontal: 1.25rem;
+
+  /* Navbar */
+  --ifm-navbar-background-color: #ffffff;
+  --ifm-navbar-shadow: 0 1px 0 var(--ifm-color-emphasis-200);
+  --ifm-navbar-height: 60px;
+
+  /* Footer */
+  --ifm-footer-background-color: #0f172a;
+  --ifm-footer-color: #cbd5e1;
+  --ifm-footer-link-color: #e2e8f0;
+  --ifm-footer-title-color: #f8fafc;
 }
 
-/* Navbar Enhancements */
+/* Dark theme — keep the same accent, flip surfaces */
+html[data-theme='dark'] {
+  --ifm-background-color: #0b1220;
+  --ifm-background-surface-color: #111a2e;
+  --ifm-color-content: #e2e8f0;
+  --ifm-color-content-secondary: #94a3b8;
+  --ifm-color-emphasis-100: #111a2e;
+  --ifm-color-emphasis-200: #1e293b;
+  --ifm-color-emphasis-300: #334155;
+  --ifm-color-emphasis-400: #475569;
+
+  --ifm-color-primary: #3b82f6;
+  --ifm-color-primary-dark: #2563eb;
+
+  --ifm-navbar-background-color: #0b1220;
+  --ifm-navbar-shadow: 0 1px 0 rgba(255, 255, 255, 0.06);
+
+  --ifm-footer-background-color: #060a14;
+  --docusaurus-highlighted-code-line-bg: rgba(59, 130, 246, 0.18);
+}
+
+/* ---------- Base ---------- */
+
+html, body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.005em;
+}
+
+article h1, .markdown h1, .hero__title { letter-spacing: -0.025em; }
+article h2, .markdown h2 { letter-spacing: -0.015em; margin-top: 2rem; }
+article h3, .markdown h3 { letter-spacing: -0.01em; }
+
+a { font-weight: 500; }
+a:hover { text-decoration: underline; }
+
+/* ---------- Navbar ---------- */
 
 .navbar {
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+  box-shadow: none;
 }
-
 .navbar__title {
-  font-weight: bold;
-  letter-spacing: -0.2px;
-}
-
-.navbar__logo img {
-  max-height: 32px;
-  padding-right: 0.5rem;
-}
-
-/* Hide duplicated Docs link */
-
-.navbar__item[href="/docs/"] {
-  display: none;
-}
-
-/* Homepage Hero Section */
-
-.hero {
-  padding: 4rem 1rem 2rem;
-  text-align: left;
-}
-
-.hero .hero__title {
-  font-size: 3rem;
   font-weight: 700;
-  color: var(--ifm-heading-color);
-  margin-bottom: 1rem;
+  font-size: 1.05rem;
+  letter-spacing: -0.015em;
 }
-
-.hero__subtitle {
-  font-size: 1.2rem;
-  color: var(--ifm-color-gray-600);
-  max-width: 600px;
-  line-height: 1.6;
+.navbar__logo { margin-right: 0.5rem; }
+.navbar__logo img {
+  max-height: 22px;
+  padding-right: 0;
 }
-
-.hero__buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-/* CTA Buttons */
-
-.hero__buttons .button {
-  font-size: 0.95rem;
-  font-weight: 600;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  box-shadow: var(--ifm-global-shadow-md);
-  transition: background 0.3s ease, color 0.3s ease;
-}
-
-.button.button--secondary {
-  background: #f5f5f5;
-  border: 1px solid #ccc;
-}
-
-.button:hover {
-  transform: translateY(-1px);
-}
-
-/* Responsive Layout for Hero Image */
-
-@media (min-width: 768px) {
-  .hero {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .hero img {
-    max-width: 460px;
-    margin-left: 2rem;
-  }
-}
-
-/* Footer Styling */
-
-.footer {
-  padding: 1rem 1.5rem;
-  font-size: 0.85rem;
-  background-color: #1c1e21;
-}
-
-.footer__links {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  margin-bottom: 0.5rem;
-}
-
-.footer__col {
-  min-width: 180px;
-  margin: 0.5rem 0;
-}
-
-.footer__title {
-  font-weight: 600;
-  font-size: 1rem;
-  margin-bottom: 0.5rem;
-}
-
-.footer a {
-  color: #cfd3dc;
-  text-decoration: none;
-}
-
-.footer a:hover {
-  text-decoration: underline;
-}
-
-/* Mobile Nav Tweaks */
-
-.navbar-sidebar {
-  padding-top: 0.5rem;
-}
-
-.navbar-sidebar__brand {
-  margin-bottom: 1rem;
-}
-
-.navbar-sidebar .menu__link {
+.navbar__item {
+  font-size: 0.92rem;
   font-weight: 500;
 }
+.navbar__link:hover { text-decoration: none; color: var(--ifm-color-primary); }
 
-/* Code Blocks Styling */
+.navbar__item[href="/docs/"] { display: none; }
+
+/* ---------- Buttons ---------- */
+
+.button {
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.button--primary {
+  background: var(--ifm-color-primary);
+  border-color: var(--ifm-color-primary);
+  box-shadow: var(--ifm-global-shadow-lw);
+}
+.button--primary:hover {
+  background: var(--ifm-color-primary-dark);
+  border-color: var(--ifm-color-primary-dark);
+}
+.button--secondary {
+  background: var(--ifm-background-color);
+  border: 1px solid var(--ifm-color-emphasis-300);
+  color: var(--ifm-color-content);
+}
+.button--secondary:hover {
+  background: var(--ifm-color-emphasis-100);
+  border-color: var(--ifm-color-emphasis-400);
+  color: var(--ifm-color-content);
+}
+
+/* ---------- Sidebar ---------- */
+
+.theme-doc-sidebar-container {
+  border-right: 1px solid var(--ifm-color-emphasis-200);
+}
+.menu__link {
+  font-size: 0.9rem;
+  border-radius: var(--ifm-button-border-radius);
+}
+.menu__link--active {
+  font-weight: 600;
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--ifm-color-primary);
+}
+.menu__list-item-collapsible:hover { background: var(--ifm-color-emphasis-100); }
+
+/* ---------- Article ---------- */
+
+.markdown > h1:first-child { font-size: 2.25rem; line-height: 1.15; }
+.markdown a { font-weight: 500; }
+.markdown table {
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: var(--ifm-global-radius);
+  overflow: hidden;
+  display: table;
+  width: 100%;
+}
+.markdown table thead {
+  background: var(--ifm-color-emphasis-100);
+}
+.markdown table th {
+  font-weight: 600;
+  font-size: 0.88rem;
+  letter-spacing: -0.005em;
+}
+.markdown table td, .markdown table th {
+  border-color: var(--ifm-color-emphasis-200);
+}
+
+.markdown blockquote {
+  border-left: 3px solid var(--ifm-color-primary);
+  background: var(--ifm-color-emphasis-100);
+  margin-left: 0;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0 var(--ifm-global-radius) var(--ifm-global-radius) 0;
+}
+
+/* Admonitions (tip / note / etc) */
+.alert {
+  border-radius: var(--ifm-global-radius);
+  border: 1px solid var(--ifm-color-emphasis-200);
+  box-shadow: var(--ifm-global-shadow-lw);
+}
+
+/* ---------- Code blocks ---------- */
 
 .theme-code-block {
-  border-radius: 6px;
+  border-radius: var(--ifm-global-radius);
+  box-shadow: var(--ifm-global-shadow-lw);
+  border: 1px solid var(--ifm-color-emphasis-200);
+}
+html[data-theme='dark'] .theme-code-block {
+  border-color: rgba(255, 255, 255, 0.05);
+}
+.prism-code {
+  font-size: 0.86rem;
+  line-height: 1.55;
 }
 
-/* Dark Mode Fixes */
-
-html[data-theme='dark'] .button.button--secondary {
-  background: #2b2b2b;
-  border: 1px solid #444;
-  color: #e3e3e3;
+/* Inline code */
+:not(pre) > code {
+  background: var(--ifm-color-emphasis-100);
+  border: 1px solid var(--ifm-color-emphasis-200);
+  font-weight: 500;
+}
+html[data-theme='dark'] :not(pre) > code {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
-html[data-theme='dark'] .footer {
-  background-color: #121212;
-  color: #aaa;
+/* ---------- TOC ---------- */
+
+.table-of-contents__link {
+  font-size: 0.85rem;
+  color: var(--ifm-color-content-secondary);
 }
+.table-of-contents__link:hover {
+  color: var(--ifm-color-primary);
+  text-decoration: none;
+}
+.table-of-contents__link--active {
+  font-weight: 600;
+  color: var(--ifm-color-primary);
+}
+
+/* ---------- Footer ---------- */
+
+.footer {
+  padding: 2.5rem 1.5rem 2rem;
+  font-size: 0.88rem;
+}
+.footer__title {
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ifm-footer-title-color);
+}
+.footer__link-item {
+  color: var(--ifm-footer-link-color);
+  font-size: 0.9rem;
+}
+.footer__link-item:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+.footer__copyright {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+/* ---------- Pagination ---------- */
+
+.pagination-nav__link {
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: var(--ifm-global-radius);
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.pagination-nav__link:hover {
+  border-color: var(--ifm-color-primary);
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+.pagination-nav__sublabel {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.72rem;
+  color: var(--ifm-color-content-secondary);
+}
+.pagination-nav__label { font-weight: 600; }

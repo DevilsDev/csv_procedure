@@ -1,0 +1,197 @@
+/**
+ * Version: 2.7.1
+ * Description: Landing-page sections under the hero on the Thresh docs homepage.
+ * Author: Ali Kahwaji
+ */
+
+.section {
+  padding: 4rem 1rem;
+}
+
+.sectionAlt {
+  background: var(--ifm-color-emphasis-100);
+  border-top: 1px solid var(--ifm-color-emphasis-200);
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.sectionTitle {
+  font-size: 1.85rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  margin: 0 0 0.5rem;
+  text-align: left;
+  color: var(--ifm-color-content);
+}
+
+.sectionLede {
+  margin: 0 0 2rem;
+  color: var(--ifm-color-content-secondary);
+  font-size: 1.05rem;
+  max-width: 640px;
+}
+
+/* ---------- Two-up: Server vs Browser ---------- */
+
+.twoUp {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 800px) {
+  .twoUp { grid-template-columns: 1fr 1fr; }
+}
+
+.flavor {
+  background: var(--ifm-background-color);
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: var(--ifm-card-border-radius);
+  padding: 1.5rem 1.5rem 1.25rem;
+  box-shadow: var(--ifm-global-shadow-lw);
+}
+
+.flavor h3 {
+  font-size: 1.1rem;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.005em;
+}
+
+.flavor p {
+  color: var(--ifm-color-content-secondary);
+  font-size: 0.92rem;
+  margin: 0 0 1rem;
+  line-height: 1.55;
+}
+
+.flavorMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.tag {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  background: var(--ifm-color-emphasis-100);
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 999px;
+  color: var(--ifm-color-content-secondary);
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+.flavorAction {
+  margin-top: 0.5rem;
+}
+
+/* ---------- Steps ---------- */
+
+.steps {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 800px) {
+  .steps { grid-template-columns: repeat(3, 1fr); }
+}
+
+.step {
+  position: relative;
+  padding: 1.5rem 1.5rem 1.25rem;
+  background: var(--ifm-background-color);
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: var(--ifm-card-border-radius);
+}
+
+.stepNumber {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--ifm-color-primary);
+  font-weight: 700;
+  font-size: 0.82rem;
+  margin-bottom: 0.85rem;
+}
+
+.step h3 {
+  font-size: 1rem;
+  margin: 0 0 0.4rem;
+  letter-spacing: -0.005em;
+}
+
+.step p {
+  color: var(--ifm-color-content-secondary);
+  font-size: 0.9rem;
+  margin: 0;
+  line-height: 1.55;
+}
+
+/* ---------- Why grid ---------- */
+
+.why {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 700px) {
+  .why { grid-template-columns: repeat(3, 1fr); }
+}
+
+.whyItem h3 {
+  font-size: 1rem;
+  margin: 0 0 0.35rem;
+  letter-spacing: -0.005em;
+}
+
+.whyItem p {
+  color: var(--ifm-color-content-secondary);
+  font-size: 0.92rem;
+  margin: 0;
+  line-height: 1.55;
+}
+
+/* ---------- Code sample ---------- */
+
+.codeSample {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 1.25rem 1.4rem;
+  border-radius: var(--ifm-card-border-radius);
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  overflow-x: auto;
+  margin: 0;
+}
+.codeSample .comment { color: #64748b; }
+.codeSample .flag { color: #93c5fd; }
+.codeSample .str { color: #fcd34d; }
+
+/* ---------- Final CTA ---------- */
+
+.cta {
+  text-align: center;
+  padding: 4rem 1rem;
+}
+.cta h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  margin: 0 0 0.6rem;
+}
+.cta p {
+  font-size: 1.05rem;
+  color: var(--ifm-color-content-secondary);
+  margin: 0 auto 1.5rem;
+  max-width: 520px;
+}
+.ctaButtons {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  justify-content: center;
+}
