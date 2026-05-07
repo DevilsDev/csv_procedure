@@ -11,9 +11,69 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="referrer" content="no-referrer" />
   <meta name="color-scheme" content="light" />
-  <meta name="description" content="Strip identifiers from spreadsheets in your browser. No upload, no server." />
+  <meta name="theme-color" content="#2563eb" />
+  <meta name="robots" content="index, follow" />
+  <meta name="author" content="Ali Kahwaji" />
+  <meta name="keywords" content="spreadsheet de-identification, anonymize Excel, CSV cleaning, in-browser ETL, privacy, NHI, DOB to age, healthcare data, HIPAA, PHI, open source" />
+  <meta name="description" content="Strip identifiers, anonymize patient codes, convert DOB to age, and produce clean per-sheet CSVs from any Excel workbook. Runs entirely in your browser — no upload, no server." />
   <title>Thresh — spreadsheet de-identification, in your browser</title>
+
+  <link rel="canonical" href="https://devilsdev.github.io/csv_procedure/tool/" />
+  <link rel="icon" href="../img/thresh-mark.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="../img/thresh-mark.svg" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Thresh" />
+  <meta property="og:title" content="Thresh — spreadsheet de-identification, in your browser" />
+  <meta property="og:description" content="Strip identifiers, anonymize patient codes, convert DOB to age, and produce clean per-sheet CSVs. Runs entirely in your browser — no upload, no server." />
+  <meta property="og:url" content="https://devilsdev.github.io/csv_procedure/tool/" />
+  <meta property="og:image" content="https://devilsdev.github.io/csv_procedure/img/og-card.svg" />
+  <meta property="og:image:alt" content="Thresh — spreadsheet de-identification, in your browser." />
+  <meta property="og:locale" content="en_US" />
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Thresh — spreadsheet de-identification, in your browser" />
+  <meta name="twitter:description" content="Strip identifiers, anonymize patient codes, convert DOB to age, and produce clean per-sheet CSVs. Runs entirely in your browser — no upload, no server." />
+  <meta name="twitter:image" content="https://devilsdev.github.io/csv_procedure/img/og-card.svg" />
+
   <link rel="stylesheet" href="./style.css" />
+
+  <!-- Structured data (schema.org WebApplication) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Thresh",
+    "alternateName": "Thresh ETL",
+    "description": "Strip identifiers, anonymize patient codes, convert DOB to age, and produce clean per-sheet CSVs from Excel workbooks. Runs entirely in the browser.",
+    "url": "https://devilsdev.github.io/csv_procedure/tool/",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "Any (web browser)",
+    "browserRequirements": "Requires JavaScript",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "license": "https://opensource.org/licenses/MIT",
+    "creator": {
+      "@type": "Person",
+      "name": "Ali Kahwaji",
+      "url": "https://github.com/alikahwaji"
+    },
+    "isAccessibleForFree": true,
+    "softwareVersion": "2.7.1",
+    "applicationSubCategory": "Data privacy / ETL",
+    "featureList": [
+      "Anonymize NHI to sequential ID",
+      "Convert DOB to whole-year age",
+      "Drop Address and Contact columns",
+      "Deduplicate transformed rows",
+      "Multi-sheet workbook support",
+      "Per-sheet CSV download",
+      "Manifest JSON download",
+      "100% client-side processing"
+    ]
+  }
+  </script>
 </head>
 <body>
 

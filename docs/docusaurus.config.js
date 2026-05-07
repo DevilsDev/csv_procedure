@@ -28,6 +28,20 @@ export default {
   },
 
   themeConfig: {
+    image: 'img/og-card.svg',
+    metadata: [
+      { name: 'keywords', content: 'spreadsheet, ETL, de-identification, anonymization, CSV, Excel, privacy, data cleaning, healthcare data, HIPAA, PHI, NHI, in-browser, open source' },
+      { name: 'author', content: 'Ali Kahwaji' },
+      { name: 'robots', content: 'index, follow' },
+      { name: 'theme-color', content: '#2563eb' },
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { property: 'og:type', content: 'website' },
+      { property: 'og:site_name', content: 'Thresh' },
+    ],
+    colorMode: {
+      defaultMode: 'light',
+      respectPrefersColorScheme: true,
+    },
     navbar: {
       title: 'Thresh',
       logo: {
