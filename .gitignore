@@ -36,10 +36,18 @@ public/base.css
 .env.development.local
 .env.test.local
 
-# VSCode
-.vscode/
+# Husky
+# The hooks themselves (e.g. .husky/pre-commit) are tracked so a fresh clone
+# picks them up; ignore husky's auto-generated internals which `husky install`
+# regenerates from the prepare hook on every npm install.
+.husky/_/
 
-# Others
+# Claude Code session state — local-only worktrees and per-machine settings
+.claude/
+
+# Editors
 .DS_Store
 .idea/
+.vscode/
+
 # !__tests__/fixtures/*
