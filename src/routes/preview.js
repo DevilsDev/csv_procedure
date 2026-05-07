@@ -18,6 +18,7 @@ const extract = require('../etl/extract');
 const { transformSheetWithStats } = require('../etl/transform');
 const { createIdMapper } = require('../etl/idMapper');
 const { DEFAULT_RULE_SET, loadRuleSetFromPath } = require('../etl/rules');
+const { computeKAnonymity } = require('../etl/kAnonymity');
 
 const router = express.Router();
 
@@ -72,6 +73,11 @@ router.post('/', async (req, res) => {
     const sheetOutputs = [];
     const summary = emptySummary();
 
+    const qiNames = (ruleSet.kAnonymity && ruleSet.kAnonymity.quasiIdentifiers) || [];
+    const minK = ruleSet.kAnonymity && ruleSet.kAnonymity.minK != null ? ruleSet.kAnonymity.minK : null;
+    let aggregateMinK = null;
+    let kApplicable = false;
+
     for (const sheet of sheets) {
       const result = transformSheetWithStats(sheet.rows, idMapper, { ruleSet });
 
@@ -79,6 +85,15 @@ router.post('/', async (req, res) => {
       const cappedRows = result.rows.slice(0, PREVIEW_LIMIT);
       const totalDataRows = Math.max(0, result.rows.length - 1);
       const previewedDataRows = Math.max(0, cappedRows.length - 1);
+
+      const kReport = computeKAnonymity(result.rows, qiNames, { minK });
+
+      if (kReport.applicable) {
+        kApplicable = true;
+        if (kReport.k != null && (aggregateMinK == null || kReport.k < aggregateMinK)) {
+          aggregateMinK = kReport.k;
+        }
+      }
 
       sheetOutputs.push({
         sheetName: sheet.name,
@@ -89,6 +104,7 @@ router.post('/', async (req, res) => {
           previewedDataRows,
           truncated: previewedDataRows < totalDataRows,
         },
+        kAnonymity: kReport,
       });
       summary.sheetsProcessed += 1;
       summary.rowsProcessed += result.stats.rowsProcessed;
@@ -104,6 +120,9 @@ router.post('/', async (req, res) => {
       generatedAt: new Date().toISOString(),
       sheets: sheetOutputs,
       ...summary,
+      kAnonymity: kApplicable
+        ? { k: aggregateMinK, minK, satisfiesMinK: minK == null || (aggregateMinK != null && aggregateMinK >= minK), quasiIdentifiers: qiNames }
+        : { applicable: false },
       previewLimit: PREVIEW_LIMIT,
       dryRun: true,
     });

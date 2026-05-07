@@ -216,13 +216,23 @@
       ? 'Source: ' + sourceName + ' · processed ' + (summary.sheetsProcessed || 0) + ' sheet' + ((summary.sheetsProcessed || 0) === 1 ? '' : 's')
       : '';
 
-    statsGridEl.innerHTML = [
+    const cards = [
       statCard(summary.sheetsProcessed     != null ? summary.sheetsProcessed     : 0, 'Sheets'),
       statCard(summary.rowsProcessed       != null ? summary.rowsProcessed       : 0, 'Rows processed'),
       statCard(summary.duplicatesRemoved   != null ? summary.duplicatesRemoved   : 0, 'Duplicates removed'),
       statCard(summary.invalidDobCount     != null ? summary.invalidDobCount     : 0, 'Invalid DOB'),
       statCard(summary.missingNhiCount     != null ? summary.missingNhiCount     : 0, 'Missing NHI'),
-    ].join('');
+    ];
+    if (result.kAnonymity && result.kAnonymity.applicable !== false) {
+      const k = result.kAnonymity.k;
+      const minK = result.kAnonymity.minK;
+      const ok = result.kAnonymity.satisfiesMinK !== false;
+      const valueLabel = (k == null ? '—' : 'k=' + k);
+      const subLabel = minK ? ('threshold k≥' + minK + (ok ? ' ·  ✓' : ' · ✗ at risk')) : 'k-anonymity';
+      cards.push('<div class="stat ' + (ok ? '' : 'warn') + '"><div class="value">' +
+        escapeHtml(valueLabel) + '</div><div class="label">' + escapeHtml(subLabel) + '</div></div>');
+    }
+    statsGridEl.innerHTML = cards.join('');
 
     const sheets = Array.isArray(result.sheets) ? result.sheets : [];
     renderTabs(sheets, result.manifest);

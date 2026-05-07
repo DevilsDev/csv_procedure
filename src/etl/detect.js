@@ -268,6 +268,8 @@ function detectSheets(sheets) {
   const columns = [];
   const suggestedRules = [];
   const seenHeaders = new Set();
+  const quasiHeaders = [];
+  const quasiSeen = new Set();
   let direct = 0;
   let quasi = 0;
 
@@ -300,7 +302,14 @@ function detectSheets(sheets) {
       columns.push(report);
 
       if (best && best.pattern.severity === 'direct') direct++;
-      if (best && best.pattern.severity === 'quasi') quasi++;
+      if (best && best.pattern.severity === 'quasi') {
+        quasi++;
+        const norm = normalizeHeader(headerCell);
+        if (!quasiSeen.has(norm)) {
+          quasiSeen.add(norm);
+          quasiHeaders.push(String(headerCell));
+        }
+      }
 
       if (best && best.pattern.suggested && !seenHeaders.has(normalizeHeader(headerCell))) {
         seenHeaders.add(normalizeHeader(headerCell));
@@ -316,9 +325,16 @@ function detectSheets(sheets) {
   suggestedRules.push({ match: { empty: true },          action: 'drop' });
   suggestedRules.push({ match: { startsWith: 'column' }, action: 'drop' });
 
+  const suggestedRuleSet = { version: '1', rules: suggestedRules };
+  if (quasiHeaders.length > 0) {
+    // Default to k>=5 — a common threshold for "small-cell suppression" in
+    // healthcare reporting. Users can lower or raise it on the rule set.
+    suggestedRuleSet.kAnonymity = { quasiIdentifiers: quasiHeaders, minK: 5 };
+  }
+
   return {
     columns,
-    suggestedRuleSet: { version: '1', rules: suggestedRules },
+    suggestedRuleSet,
     summary: { directIdentifiers: direct, quasiIdentifiers: quasi },
   };
 }

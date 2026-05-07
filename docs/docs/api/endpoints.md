@@ -10,7 +10,8 @@ The HTTP surface is intentionally small — Clinisync exposes one upload endpoin
 | Method | Path | Purpose |
 | --- | --- | --- |
 | `POST` | `/upload` | Accept a multipart spreadsheet upload, write per-sheet CSVs + a manifest, and return JSON describing them. See [Upload Endpoint](/api-upload). |
-| `POST` | `/preview` | Dry-run: identical pipeline to `/upload` but writes nothing. Returns the same JSON shape minus `files` / `manifest`, plus a `previewRows` block per sheet (capped at 25 rows) so you can inspect the cleaning before committing. |
+| `POST` | `/preview` | Dry-run: identical pipeline to `/upload` but writes nothing. Returns the same JSON shape minus `files` / `manifest`, plus a `previewRows` block per sheet (capped at 25 rows) and a `kAnonymity` block reporting `k`, `minK`, and whether the cleaned output meets the threshold. |
+| `POST` | `/detect` | Scan an uploaded workbook for likely PHI / PII / quasi-identifier columns and return a suggested rule set ready to feed back into `/upload` or `/preview`. No files written. |
 | `GET` | `/downloads/:filename` | Returns a previously generated CSV or manifest. Strict filename allowlist (only files produced by the load step), gated on the same auth as `/upload`. |
 | `GET` | `/` (and any other static file) | Serves the browser UI from `public/`. |
 

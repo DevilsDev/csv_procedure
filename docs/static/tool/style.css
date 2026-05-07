@@ -373,6 +373,12 @@ button {
   letter-spacing: 0.06em;
   font-weight: 600;
 }
+.stat.warn {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+.stat.warn .value { color: #92400e; }
+.stat.warn .label { color: #b45309; }
 
 /* ---------- Tabs ---------- */
 

@@ -26,6 +26,7 @@ const { createIdMapper } = require('../src/etl/idMapper');
 const { extractSheets } = require('../src/etl/extract');
 const { DEFAULT_RULE_SET, loadRuleSetFromPath } = require('../src/etl/rules');
 const { detectSheets } = require('../src/etl/detect');
+const { computeKAnonymity } = require('../src/etl/kAnonymity');
 
 const VERSION = (function () {
   try { return fs.readFileSync(path.resolve(__dirname, '..', 'VERSION'), 'utf8').trim(); }
@@ -170,11 +171,23 @@ async function cmdPreview(positional, options) {
   const summary = emptySummary();
   const sheetOutputs = [];
 
+  const qiNames = (ruleSet.kAnonymity && ruleSet.kAnonymity.quasiIdentifiers) || [];
+  const minK = ruleSet.kAnonymity && ruleSet.kAnonymity.minK != null ? ruleSet.kAnonymity.minK : null;
+  let aggregateMinK = null;
+  let kApplicable = false;
+
   for (const sheet of sheets) {
     const result = transformSheetWithStats(sheet.rows, idMapper, { ruleSet });
     const cappedRows = result.rows.slice(0, limit);
     const totalDataRows = Math.max(0, result.rows.length - 1);
     const previewedDataRows = Math.max(0, cappedRows.length - 1);
+    const kReport = computeKAnonymity(result.rows, qiNames, { minK });
+    if (kReport.applicable) {
+      kApplicable = true;
+      if (kReport.k != null && (aggregateMinK == null || kReport.k < aggregateMinK)) {
+        aggregateMinK = kReport.k;
+      }
+    }
     sheetOutputs.push({
       sheetName: sheet.name,
       ...result.stats,
@@ -184,6 +197,7 @@ async function cmdPreview(positional, options) {
         previewedDataRows,
         truncated: previewedDataRows < totalDataRows,
       },
+      kAnonymity: kReport,
     });
     accumulate(summary, result.stats);
   }
@@ -193,6 +207,9 @@ async function cmdPreview(positional, options) {
     generatedAt: new Date().toISOString(),
     ...summary,
     sheets: sheetOutputs,
+    kAnonymity: kApplicable
+      ? { k: aggregateMinK, minK, satisfiesMinK: minK == null || (aggregateMinK != null && aggregateMinK >= minK), quasiIdentifiers: qiNames }
+      : { applicable: false },
     previewLimit: limit,
     dryRun: true,
   }, null, 2) + '\n');

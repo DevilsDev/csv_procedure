@@ -66,6 +66,21 @@ function validateRuleSet(rs) {
     throw new Error('Rule set must have a "rules" array.');
   }
 
+  if (rs.kAnonymity != null) {
+    if (typeof rs.kAnonymity !== 'object') {
+      throw new Error('"kAnonymity" must be an object when provided.');
+    }
+    if (rs.kAnonymity.quasiIdentifiers != null && !Array.isArray(rs.kAnonymity.quasiIdentifiers)) {
+      throw new Error('"kAnonymity.quasiIdentifiers" must be an array of column names.');
+    }
+    if (rs.kAnonymity.minK != null) {
+      const minK = rs.kAnonymity.minK;
+      if (typeof minK !== 'number' || !Number.isInteger(minK) || minK < 1) {
+        throw new Error('"kAnonymity.minK" must be a positive integer.');
+      }
+    }
+  }
+
   rs.rules.forEach(function (rule, idx) {
     if (!rule || typeof rule !== 'object') {
       throw new Error('rules[' + idx + '] must be an object.');

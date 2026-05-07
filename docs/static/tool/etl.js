@@ -293,15 +293,28 @@
       redactedCellCount: 0,
     };
 
+    const ruleSet = options.ruleSet || DEFAULT_RULE_SET;
+    const qiNames = (ruleSet.kAnonymity && ruleSet.kAnonymity.quasiIdentifiers) || [];
+    const minK = ruleSet.kAnonymity && ruleSet.kAnonymity.minK != null ? ruleSet.kAnonymity.minK : null;
+    let aggregateMinK = null;
+    let kApplicable = false;
+
     const sheetOutputs = [];
     let counter = 0;
 
     for (let i = 0; i < sheets.length; i++) {
       counter += 1;
       const sheet = sheets[i];
-      const result = transformSheetWithStats(sheet.rows, idMapper, { ruleSet: options.ruleSet });
+      const result = transformSheetWithStats(sheet.rows, idMapper, { ruleSet: ruleSet });
       const csv = csvFromRows(result.rows);
       const fileName = makeFilename(sourceBase, sheet.name, counter, timestamp);
+      const kReport = computeKAnonymity(result.rows, qiNames, { minK: minK });
+      if (kReport.applicable) {
+        kApplicable = true;
+        if (kReport.k != null && (aggregateMinK == null || kReport.k < aggregateMinK)) {
+          aggregateMinK = kReport.k;
+        }
+      }
 
       sheetOutputs.push({
         sheetName: sheet.name,
@@ -313,6 +326,7 @@
         invalidDobCount: result.stats.invalidDobCount,
         missingNhiCount: result.stats.missingNhiCount,
         redactedCellCount: result.stats.redactedCellCount,
+        kAnonymity: kReport,
       });
 
       summary.sheetsProcessed += 1;
@@ -348,6 +362,9 @@
       sheets: sheetOutputs,
       manifest: { name: manifestName, json: manifest },
       summary: summary,
+      kAnonymity: kApplicable
+        ? { k: aggregateMinK, minK: minK, satisfiesMinK: minK == null || (aggregateMinK != null && aggregateMinK >= minK), quasiIdentifiers: qiNames }
+        : { applicable: false },
     };
   }
 
@@ -454,6 +471,8 @@
     const columns = [];
     const suggestedRules = [];
     const seenHeaders = new Set();
+    const quasiHeaders = [];
+    const quasiSeen = new Set();
     let direct = 0;
     let quasi = 0;
     for (let s = 0; s < sheets.length; s++) {
@@ -479,7 +498,14 @@
           suggested: best && best.pattern.suggested ? best.pattern.suggested : null,
         });
         if (best && best.pattern.severity === 'direct') direct++;
-        if (best && best.pattern.severity === 'quasi') quasi++;
+        if (best && best.pattern.severity === 'quasi') {
+          quasi++;
+          const norm = normalizeHeader(headerCell);
+          if (!quasiSeen.has(norm)) {
+            quasiSeen.add(norm);
+            quasiHeaders.push(String(headerCell));
+          }
+        }
         if (best && best.pattern.suggested && !seenHeaders.has(normalizeHeader(headerCell))) {
           seenHeaders.add(normalizeHeader(headerCell));
           suggestedRules.push(Object.assign({ match: { equals: String(headerCell) } }, best.pattern.suggested));
@@ -488,11 +514,83 @@
     }
     suggestedRules.push({ match: { empty: true },          action: 'drop' });
     suggestedRules.push({ match: { startsWith: 'column' }, action: 'drop' });
+    const suggestedRuleSet = { version: '1', rules: suggestedRules };
+    if (quasiHeaders.length > 0) {
+      suggestedRuleSet.kAnonymity = { quasiIdentifiers: quasiHeaders, minK: 5 };
+    }
     return {
       columns: columns,
-      suggestedRuleSet: { version: '1', rules: suggestedRules },
+      suggestedRuleSet: suggestedRuleSet,
       summary: { directIdentifiers: direct, quasiIdentifiers: quasi },
     };
+  }
+
+  // ===== k-anonymity (mirror of src/etl/kAnonymity.js) =====
+
+  function computeKAnonymity(rows, qiColumnNames, options) {
+    const opts = options || {};
+    if (!Array.isArray(rows) || rows.length < 2 || !Array.isArray(qiColumnNames) || qiColumnNames.length === 0) {
+      return {
+        applicable: false,
+        reason: !Array.isArray(qiColumnNames) || qiColumnNames.length === 0 ? 'no quasi-identifiers configured' : 'no data rows',
+        k: null, totalRows: 0, uniqueGroups: 0, singletonRows: 0, histogram: [], quasiIdentifiers: [],
+        minK: opts.minK != null ? opts.minK : null,
+      };
+    }
+    const header = rows[0];
+    const headerNorm = header.map(function (h) { return String(h == null ? '' : h).trim().toLowerCase(); });
+    const qiIndices = [];
+    const qiHeaders = [];
+    for (let n = 0; n < qiColumnNames.length; n++) {
+      const wanted = String(qiColumnNames[n] == null ? '' : qiColumnNames[n]).trim().toLowerCase();
+      if (wanted === '') continue;
+      const idx = headerNorm.indexOf(wanted);
+      if (idx !== -1) { qiIndices.push(idx); qiHeaders.push(header[idx]); }
+    }
+    if (qiIndices.length === 0) {
+      return { applicable: false, reason: 'requested quasi-identifiers not present in cleaned output',
+        k: null, totalRows: 0, uniqueGroups: 0, singletonRows: 0, histogram: [], quasiIdentifiers: [],
+        minK: opts.minK != null ? opts.minK : null };
+    }
+    const groupCounts = new Map();
+    let dataRows = 0;
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (!Array.isArray(row)) continue;
+      const tuple = qiIndices.map(function (idx) {
+        const v = row[idx];
+        return v == null ? '' : String(v);
+      });
+      const key = JSON.stringify(tuple);
+      groupCounts.set(key, (groupCounts.get(key) || 0) + 1);
+      dataRows += 1;
+    }
+    let minK = Infinity;
+    let singletonRows = 0;
+    const histogramMap = new Map();
+    groupCounts.forEach(function (count) {
+      if (count < minK) minK = count;
+      if (count === 1) singletonRows += 1;
+      histogramMap.set(count, (histogramMap.get(count) || 0) + 1);
+    });
+    if (minK === Infinity) minK = null;
+    const histogram = Array.from(histogramMap.entries())
+      .sort(function (a, b) { return a[0] - b[0]; })
+      .map(function (e) { return { k: e[0], groupCount: e[1] }; });
+    const report = {
+      applicable: true,
+      k: minK,
+      totalRows: dataRows,
+      uniqueGroups: groupCounts.size,
+      singletonRows: singletonRows,
+      histogram: histogram,
+      quasiIdentifiers: qiHeaders,
+    };
+    if (opts.minK != null) {
+      report.minK = opts.minK;
+      report.satisfiesMinK = minK != null && minK >= opts.minK;
+    }
+    return report;
   }
 
   global.ClinisyncETL = {
@@ -509,6 +607,7 @@
     detectColumn: detectColumn,
     detectSheets: detectSheets,
     PATTERNS: PATTERNS,
+    computeKAnonymity: computeKAnonymity,
   };
 
 })(typeof window !== 'undefined' ? window : globalThis);
