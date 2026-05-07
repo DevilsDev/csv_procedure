@@ -34,6 +34,8 @@
   const rulesPillEl = document.getElementById('rulesPill');
   const rulesValidateBtn = document.getElementById('rulesValidateBtn');
   const rulesResetBtn = document.getElementById('rulesResetBtn');
+  const rulesAutoDetectBtn = document.getElementById('rulesAutoDetectBtn');
+  const rulesEditorCardEl = document.getElementById('rulesEditorCard');
 
   // ----- Constants -----
   const MAX_BYTES = 5 * 1024 * 1024;
@@ -526,6 +528,52 @@
         setRulesStatus('Reset to defaults.', 'success');
       });
     }
+
+    if (rulesAutoDetectBtn) {
+      rulesAutoDetectBtn.addEventListener('click', autoDetectFromSelected);
+    }
+  }
+
+  // ===== Auto-detect from selected file =====
+
+  function autoDetectFromSelected() {
+    if (!selectedFile) {
+      setRulesStatus('Choose a workbook first (or click "Try with a sample workbook"), then run auto-detect.', 'error');
+      return;
+    }
+    setRulesStatus('Scanning ' + selectedFile.name + '...', '');
+    rulesAutoDetectBtn.disabled = true;
+
+    readFileAsArrayBuffer(selectedFile)
+      .then(function (buf) {
+        const sheets = window.ClinisyncETL.extractSheets(buf);
+        const report = window.ClinisyncETL.detectSheets(sheets);
+        rulesEditorEl.value = JSON.stringify(report.suggestedRuleSet, null, 2);
+        activeRuleSet = report.suggestedRuleSet;
+        setRulesPill(true);
+
+        const direct = report.summary.directIdentifiers;
+        const quasi = report.summary.quasiIdentifiers;
+        const detected = report.columns.filter(function (c) { return c.bestType; });
+
+        const headlines = detected
+          .filter(function (c) { return c.bestSeverity === 'direct'; })
+          .map(function (c) { return c.bestType + '·' + c.header; })
+          .slice(0, 8);
+
+        const summary =
+          'Detected ' + direct + ' direct + ' + quasi + ' quasi-identifier column' +
+          ((direct + quasi) === 1 ? '' : 's') +
+          (headlines.length ? '. Top hits: ' + headlines.join(', ') : '') +
+          '. Review the rule set below, then click Clean.';
+        setRulesStatus(summary, 'success');
+        // Make sure the user actually sees the editor that was just populated.
+        if (rulesEditorCardEl && !rulesEditorCardEl.open) rulesEditorCardEl.open = true;
+      })
+      .catch(function (err) {
+        setRulesStatus('Auto-detect failed: ' + (err && err.message ? err.message : err), 'error');
+      })
+      .then(function () { rulesAutoDetectBtn.disabled = false; });
   }
 
   initRulesEditor();

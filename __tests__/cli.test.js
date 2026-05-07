@@ -154,4 +154,43 @@ describe('thresh CLI', () => {
     expect(code).not.toBe(0);
     expect(stderr.toLowerCase()).toMatch(/file not found/);
   });
+
+  it('detect emits a JSON detection report and a suggested rule set', () => {
+    const { code, stdout } = run(['detect', FIXTURE]);
+    expect(code).toBe(0);
+    const report = JSON.parse(stdout);
+    expect(report.dryRun).toBe(true);
+    expect(Array.isArray(report.columns)).toBe(true);
+    expect(report.suggestedRuleSet).toEqual(expect.objectContaining({
+      version: '1',
+      rules: expect.any(Array),
+    }));
+    // Suggested rule set should at minimum include the universal hygiene tail.
+    const tail = report.suggestedRuleSet.rules.slice(-2);
+    expect(tail[0].match).toEqual({ empty: true });
+    expect(tail[1].match).toEqual({ startsWith: 'column' });
+    // Fixture has NHI + DOB columns, so detection should pick them up.
+    const types = report.columns.map(c => c.bestType).filter(Boolean);
+    expect(types).toEqual(expect.arrayContaining(['nhi', 'dob']));
+  });
+
+  it('detect --apply runs the cleaning pipeline against the suggested rule set', () => {
+    const out = makeTempDir('detect-apply');
+    try {
+      const { code, stderr } = run(['detect', FIXTURE, '--apply', '-o', out]);
+      expect(code).toBe(0);
+      expect(stderr.toLowerCase()).toMatch(/detected.*identifier/);
+      const written = fs.readdirSync(out);
+      expect(written.some(n => /^converted-.*\.csv$/.test(n))).toBe(true);
+      expect(written.some(n => /^manifest-.*\.json$/.test(n))).toBe(true);
+    } finally {
+      fs.rmSync(out, { recursive: true, force: true });
+    }
+  });
+
+  it('detect reports a clear error for a missing input', () => {
+    const { code, stderr } = run(['detect', '/no/such/file.xlsx']);
+    expect(code).not.toBe(0);
+    expect(stderr.toLowerCase()).toMatch(/file not found/);
+  });
 });

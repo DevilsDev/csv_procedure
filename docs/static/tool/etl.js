@@ -351,6 +351,150 @@
     };
   }
 
+  // ===== Detection (mirror of src/etl/detect.js) =====
+
+  const DETECT_SAMPLE_SIZE = 25;
+  const ISO_DATE = /^(?:\d{4}-\d{2}-\d{2})(?:[T ]\d{2}:\d{2}(:\d{2})?(\.\d+)?Z?)?$/;
+  const SLASH_DATE = /^(?:\d{1,2}[/-]){2}\d{2,4}$/;
+
+  function looksLikeDate(value) {
+    if (typeof value !== 'string' || value.trim() === '') return false;
+    const isoMatch = value.match(/^(\d{4})-\d{2}-\d{2}/);
+    if (isoMatch) {
+      const y = Number(isoMatch[1]);
+      return y > 1900 && y < 2100;
+    }
+    if (SLASH_DATE.test(value)) {
+      const parts = value.split(/[/-]/);
+      const yearStr = parts[parts.length - 1];
+      if (yearStr.length === 4) {
+        const y = Number(yearStr);
+        return y > 1900 && y < 2100;
+      }
+      return true;
+    }
+    const parsed = new Date(value);
+    if (isNaN(parsed)) return false;
+    const year = parsed.getFullYear();
+    return year > 1900 && year < 2100 && /\d{4}/.test(value);
+  }
+
+  // Order matters: SSN before phone (SSN-shaped values also match the loose phone regex).
+  const PATTERNS = [
+    { type: 'email',      severity: 'direct', headerHints: ['email','e-mail','mail'], valueRegex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, suggested: { action: 'redact', replaceWith: '<email>' } },
+    { type: 'ssn',        severity: 'direct', headerHints: ['ssn','social security','social_security','tin'], valueRegex: /^\d{3}-?\d{2}-?\d{4}$/, suggested: { action: 'redact', replaceWith: '<ssn>' } },
+    { type: 'creditcard', severity: 'direct', headerHints: ['credit_card','creditcard','card_number','cardnumber','cc_number'], valueRegex: /^(?:\d[ -]?){13,19}$/, headerRequired: true, suggested: { action: 'redact', replaceWith: '<cc>' } },
+    { type: 'phone',      severity: 'direct', headerHints: ['phone','mobile','cell','tel','telephone','contact'], valueRegex: /^[+]?[\d][\d\s\-().]{6,}$/, headerRequired: true, suggested: { action: 'redact', replaceWith: '<phone>' } },
+    { type: 'nhi',        severity: 'direct', headerHints: ['nhi','national health'], valueRegex: /^[A-Za-z]{3}\d{4}$/, suggested: { action: 'anonymize', outputName: 'ID' } },
+    { type: 'mrn',        severity: 'direct', headerHints: ['mrn','medical record','patient_id','patientid','patient id','patient code','patient_code'], valueRegex: /^(?=.*\d)[A-Z0-9-]{4,20}$/i, headerRequired: true, suggested: { action: 'anonymize', outputName: 'PatientID' } },
+    { type: 'ip',         severity: 'direct', headerHints: ['ip','ip_address','ipaddress','client_ip'], valueRegex: /^(?:\d{1,3}\.){3}\d{1,3}$/, suggested: { action: 'redact', replaceWith: '<ip>' } },
+    { type: 'dob',        severity: 'direct', headerHints: ['dob','date of birth','birth_date','birthdate','birth date'], valueIsDate: true, headerRequired: true, suggested: { action: 'ageFromDate', outputName: 'Age' } },
+    { type: 'name',       severity: 'direct', headerHints: ['name','full name','first name','firstname','last name','lastname','surname','given name','family name','middle name'], headerOnly: true, suggested: { action: 'redact', replaceWith: '<name>' } },
+    { type: 'address',    severity: 'direct', headerHints: ['address','street','addr','home_address','mailing_address'], headerOnly: true, suggested: { action: 'drop' } },
+    { type: 'postcode',   severity: 'quasi',  headerHints: ['postcode','postal_code','postal code','zip','zipcode','zip_code'], valueRegex: /^[A-Z0-9][A-Z0-9 -]{2,9}$/i, headerRequired: true, suggested: null },
+    { type: 'age',        severity: 'quasi',  headerHints: ['age'], valuePredicate: function (v) { const n = Number(v); return Number.isFinite(n) && Number.isInteger(n) && n >= 0 && n <= 130; }, headerRequired: true, suggested: null },
+    { type: 'gender',     severity: 'quasi',  headerHints: ['gender','sex'], valuePredicate: function (v) { if (typeof v !== 'string') return false; const lower = v.trim().toLowerCase(); return ['m','f','male','female','x','other','nonbinary','non-binary','nb','unknown','prefer not to say'].indexOf(lower) !== -1; }, headerRequired: true, suggested: null },
+    { type: 'date',       severity: 'quasi',  valueIsDate: true, suggested: null, weight: 0.85 },
+  ];
+
+  function headerMatches(pattern, header) {
+    if (!pattern.headerHints || pattern.headerHints.length === 0) return false;
+    return pattern.headerHints.some(function (hint) { return header === hint || header.indexOf(hint) !== -1; });
+  }
+
+  function sampleNonEmpty(rows, columnIndex, n) {
+    const out = [];
+    for (let i = 1; i < rows.length && out.length < n; i++) {
+      const cell = rows[i] && rows[i][columnIndex];
+      if (cell !== null && cell !== undefined && cell !== '') out.push(cell);
+    }
+    return out;
+  }
+
+  function valueMatchRate(pattern, samples) {
+    if (samples.length === 0) return 0;
+    let hits = 0;
+    for (let i = 0; i < samples.length; i++) {
+      const v = samples[i];
+      if (pattern.valueRegex && typeof v === 'string' && pattern.valueRegex.test(v)) { hits++; continue; }
+      if (pattern.valuePredicate && pattern.valuePredicate(v)) { hits++; continue; }
+      if (pattern.valueIsDate && looksLikeDate(typeof v === 'string' ? v : String(v))) { hits++; continue; }
+    }
+    return hits / samples.length;
+  }
+
+  function patternHasValueCheck(pattern) { return Boolean(pattern.valueRegex || pattern.valuePredicate || pattern.valueIsDate); }
+
+  function detectColumn(header, samples) {
+    const norm = normalizeHeader(header);
+    const candidates = [];
+    for (let p = 0; p < PATTERNS.length; p++) {
+      const pattern = PATTERNS[p];
+      const headerHit = headerMatches(pattern, norm);
+      const valueRate = patternHasValueCheck(pattern) ? valueMatchRate(pattern, samples) : 0;
+      if (pattern.headerOnly) {
+        if (headerHit) candidates.push({ pattern: pattern, confidence: 0.92, evidence: { headerHit: headerHit, valueRate: null } });
+        continue;
+      }
+      if (pattern.headerRequired && !headerHit) continue;
+      let confidence = 0;
+      if (headerHit && valueRate >= 0.5) confidence = 0.95 + Math.min(0.04, valueRate - 0.5);
+      else if (valueRate >= 0.9)        confidence = 0.9;
+      else if (headerHit)               confidence = 0.6 + (valueRate >= 0.25 ? 0.1 : 0);
+      else if (valueRate >= 0.5)        confidence = 0.65 + Math.min(0.1, valueRate - 0.5);
+      if (confidence > 0) {
+        candidates.push({ pattern: pattern, confidence: Math.min(0.99, confidence * (pattern.weight || 1)), evidence: { headerHit: headerHit, valueRate: valueRate } });
+      }
+    }
+    candidates.sort(function (a, b) { return b.confidence - a.confidence; });
+    return { best: candidates[0] || null, candidates: candidates };
+  }
+
+  function detectSheets(sheets) {
+    const columns = [];
+    const suggestedRules = [];
+    const seenHeaders = new Set();
+    let direct = 0;
+    let quasi = 0;
+    for (let s = 0; s < sheets.length; s++) {
+      const sheet = sheets[s];
+      if (!sheet.rows || sheet.rows.length === 0) continue;
+      const header = sheet.rows[0] || [];
+      for (let c = 0; c < header.length; c++) {
+        const headerCell = header[c];
+        const samples = sampleNonEmpty(sheet.rows, c, DETECT_SAMPLE_SIZE);
+        const det = detectColumn(headerCell, samples);
+        const best = det.best;
+        columns.push({
+          sheetName: sheet.name,
+          header: headerCell,
+          sampleSize: samples.length,
+          sampleValues: samples.slice(0, 3).map(function (v) { return String(v); }),
+          detections: det.candidates.slice(0, 3).map(function (c2) {
+            return { type: c2.pattern.type, severity: c2.pattern.severity, confidence: Number(c2.confidence.toFixed(2)), evidence: c2.evidence };
+          }),
+          bestType: best ? best.pattern.type : null,
+          bestSeverity: best ? best.pattern.severity : null,
+          bestConfidence: best ? Number(best.confidence.toFixed(2)) : null,
+          suggested: best && best.pattern.suggested ? best.pattern.suggested : null,
+        });
+        if (best && best.pattern.severity === 'direct') direct++;
+        if (best && best.pattern.severity === 'quasi') quasi++;
+        if (best && best.pattern.suggested && !seenHeaders.has(normalizeHeader(headerCell))) {
+          seenHeaders.add(normalizeHeader(headerCell));
+          suggestedRules.push(Object.assign({ match: { equals: String(headerCell) } }, best.pattern.suggested));
+        }
+      }
+    }
+    suggestedRules.push({ match: { empty: true },          action: 'drop' });
+    suggestedRules.push({ match: { startsWith: 'column' }, action: 'drop' });
+    return {
+      columns: columns,
+      suggestedRuleSet: { version: '1', rules: suggestedRules },
+      summary: { directIdentifiers: direct, quasiIdentifiers: quasi },
+    };
+  }
+
   global.ClinisyncETL = {
     DEFAULT_RULE_SET: DEFAULT_RULE_SET,
     validateRuleSet: validateRuleSet,
@@ -362,6 +506,9 @@
     processWorkbook: processWorkbook,
     sanitizeName: sanitizeName,
     normalizeHeader: normalizeHeader,
+    detectColumn: detectColumn,
+    detectSheets: detectSheets,
+    PATTERNS: PATTERNS,
   };
 
 })(typeof window !== 'undefined' ? window : globalThis);

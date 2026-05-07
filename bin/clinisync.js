@@ -25,6 +25,7 @@ const { writeCsvOutput, writeManifestOutput } = require('../src/etl/load');
 const { createIdMapper } = require('../src/etl/idMapper');
 const { extractSheets } = require('../src/etl/extract');
 const { DEFAULT_RULE_SET, loadRuleSetFromPath } = require('../src/etl/rules');
+const { detectSheets } = require('../src/etl/detect');
 
 const VERSION = (function () {
   try { return fs.readFileSync(path.resolve(__dirname, '..', 'VERSION'), 'utf8').trim(); }
@@ -197,6 +198,41 @@ async function cmdPreview(positional, options) {
   }, null, 2) + '\n');
 }
 
+async function cmdDetect(positional, options) {
+  if (positional.length === 0) fatal('detect: missing input file. Try: thresh detect <file>');
+  const inputPath = path.resolve(positional[0]);
+  if (!fs.existsSync(inputPath)) fatal('detect: file not found: ' + inputPath);
+
+  const sheets = extractSheets(inputPath);
+  const report = detectSheets(sheets);
+
+  if (options.apply) {
+    // Run cleaning with the detected rule set, then write to disk like `clean`.
+    process.argv = [process.argv[0], process.argv[1], 'clean', inputPath].concat(
+      options.o ? ['-o', options.o] : (options.output ? ['-o', options.output] : [])
+    );
+    // Stash the suggested rule set in a temp file, then call clean with --rules.
+    const tmpRules = path.join(require('os').tmpdir(), 'thresh-detected-rules-' + Date.now() + '.json');
+    fs.writeFileSync(tmpRules, JSON.stringify(report.suggestedRuleSet, null, 2));
+    info('  detected ' + report.summary.directIdentifiers + ' direct + ' +
+         report.summary.quasiIdentifiers + ' quasi-identifier columns', options);
+    info('  applying suggested rule set from ' + tmpRules, options);
+    await cmdClean(positional, Object.assign({}, options, { rules: tmpRules }));
+    fs.unlinkSync(tmpRules);
+    return;
+  }
+
+  process.stdout.write(JSON.stringify({
+    sourceFileName: path.basename(inputPath),
+    generatedAt: new Date().toISOString(),
+    sheetsScanned: sheets.length,
+    summary: report.summary,
+    columns: report.columns,
+    suggestedRuleSet: report.suggestedRuleSet,
+    dryRun: true,
+  }, null, 2) + '\n');
+}
+
 function cmdServe(positional, options) {
   if (options.port) process.env.PORT = String(options.port);
   // Defer-require so the CLI starts fast and doesn't pay the Express import cost
@@ -211,6 +247,16 @@ function cmdVersion() {
 function cmdHelp(positional) {
   const which = positional[0];
   const usage = {
+    detect: [
+      'thresh detect <file> [options]',
+      '',
+      '  Scan <file> for likely PHI / PII / quasi-identifier columns and emit a',
+      '  JSON detection report (and a suggested rule set) to stdout.',
+      '',
+      'Options:',
+      '      --apply          Run `clean` immediately using the detected rule set.',
+      '  -o, --output <dir>   Output dir when --apply is set (default: ./out).',
+    ],
     clean: [
       'thresh clean <file> [options]',
       '',
@@ -255,6 +301,7 @@ function cmdHelp(positional) {
     '  thresh <command> [args] [options]',
     '',
     'Commands:',
+    '  detect     Scan a workbook for likely PHI / PII columns; emit a suggested rule set.',
     '  clean      Clean a workbook and write outputs to a directory.',
     '  preview    Dry-run: produce a JSON report without writing files.',
     '  serve      Run the HTTP server.',
@@ -277,6 +324,7 @@ async function main() {
   switch (command) {
     case 'clean':              await cmdClean(positional, options); break;
     case 'preview':            await cmdPreview(positional, options); break;
+    case 'detect':             await cmdDetect(positional, options); break;
     case 'serve':              cmdServe(positional, options); break;
     case 'version':
     case '--version':
