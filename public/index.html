@@ -1,6 +1,7 @@
 <!--
-  Version: 2.1.0
-  Description: Frontend UI for uploading Excel files with drag-and-drop, reset, and enhanced validation.
+  Version: 2.5.9
+  Description: Frontend UI for Clinisync — drag-and-drop upload, visible cleaning rules,
+               sample workbook, and downloadable per-sheet outputs after processing.
   Author: Ali Kahwaji
 -->
 
@@ -9,115 +10,333 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Clinisync API</title>
+  <title>Clinisync</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 2rem;
-      text-align: center;
-      background: #f4f4f4;
+    :root {
+      --bg: #f4f6f8;
+      --surface: #ffffff;
+      --border: #e1e4e8;
+      --text: #24292f;
+      --muted: #57606a;
+      --accent: #0969da;
+      --accent-hover: #0550ae;
+      --danger: #cf222e;
+      --success: #1a7f37;
+      --warning: #9a6700;
+      --radius: 6px;
+      --shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
     }
 
-    h2 {
-      margin-bottom: 1rem;
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
     }
+
+    .page {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    header.app-header {
+      margin-bottom: 1.5rem;
+    }
+
+    header.app-header h1 {
+      margin: 0 0 0.25rem;
+      font-size: 1.75rem;
+    }
+
+    header.app-header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: var(--shadow);
+    }
+
+    .card h2 {
+      margin: 0 0 0.75rem;
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+
+    details.card summary {
+      cursor: pointer;
+      font-size: 1.05rem;
+      font-weight: 600;
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    details.card summary::-webkit-details-marker { display: none; }
+    details.card summary::after {
+      content: "▾";
+      color: var(--muted);
+      font-size: 0.9rem;
+      transition: transform 0.15s ease;
+    }
+    details.card[open] summary::after { transform: rotate(180deg); }
+
+    .rules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+    .rule {
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fafbfc;
+    }
+    .rule strong { display: block; margin-bottom: 0.25rem; font-size: 0.9rem; }
+    .rule span { color: var(--muted); font-size: 0.85rem; }
 
     .drop-zone {
-      border: 2px dashed #bbb;
-      border-radius: 10px;
-      padding: 3rem;
-      background: white;
-      color: #777;
+      border: 2px dashed #b6bdc4;
+      border-radius: var(--radius);
+      padding: 2.25rem 1rem;
+      background: #fafbfc;
+      text-align: center;
+      color: var(--muted);
       cursor: pointer;
-      transition: background 0.2s ease;
+      transition: border-color 0.15s ease, background 0.15s ease;
     }
-
-    .drop-zone.dragover {
-      border-color: #28a745;
-      background: #f0fff5;
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--accent);
+      background: #f1f8ff;
+      color: var(--accent);
     }
+    .drop-zone p { margin: 0; }
 
-    input[type="file"] {
-      display: none;
-    }
+    input[type="file"] { display: none; }
 
-    #response {
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
       margin-top: 1rem;
-      font-weight: bold;
-      color: #333;
+      align-items: center;
     }
 
-    button {
-      margin-top: 1rem;
-      padding: 0.75rem 1.5rem;
-      font-size: 1rem;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    #uploadBtn {
-      background-color: #28a745;
-      color: white;
-    }
-
-    #uploadBtn:hover {
-      background-color: #218838;
-    }
-
-    #removeBtn {
-      display: none;
-      background-color: #dc3545;
-      color: white;
-      margin-left: 10px;
-    }
-
-    #removeBtn:hover {
-      background-color: #c82333;
-    }
-
-    .api-key-row {
-      margin-top: 1rem;
+    .controls label {
+      font-size: 0.85rem;
+      color: var(--muted);
     }
 
     #apiKeyInput {
-      padding: 0.5rem;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      width: 280px;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      flex: 1;
+      min-width: 200px;
     }
 
-    .summary {
-      text-align: left;
-      display: inline-block;
-      margin-top: 0.5rem;
+    button {
+      padding: 0.55rem 1rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      border: 1px solid transparent;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-primary:disabled { background: #94a3b8; cursor: not-allowed; }
+
+    .btn-secondary {
       background: white;
-      padding: 0.75rem 1rem;
-      border-radius: 6px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      color: var(--text);
+      border-color: var(--border);
+    }
+    .btn-secondary:hover { background: #f6f8fa; border-color: #b6bdc4; }
+
+    .btn-danger {
+      background: white;
+      color: var(--danger);
+      border-color: var(--border);
+    }
+    .btn-danger:hover { background: #fff5f5; border-color: var(--danger); }
+
+    .selected-file {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      color: var(--muted);
     }
 
-    .summary ul {
-      margin: 0.25rem 0 0 1rem;
-      padding: 0;
+    .status {
+      margin-top: 0.75rem;
+      font-size: 0.9rem;
+      color: var(--muted);
+      min-height: 1.25rem;
     }
+    .status.error { color: var(--danger); }
+    .status.success { color: var(--success); }
+
+    /* Results */
+    #results {
+      display: none;
+    }
+    #results.visible { display: block; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .stat {
+      padding: 0.85rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fafbfc;
+    }
+    .stat .value {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.1;
+    }
+    .stat .label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .sheets-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .sheet-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.65rem 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fafbfc;
+      font-size: 0.9rem;
+    }
+    .sheet-row .name {
+      font-weight: 600;
+      flex: 1;
+      min-width: 120px;
+    }
+    .sheet-row .meta {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    .sheet-row button { font-size: 0.85rem; padding: 0.4rem 0.75rem; }
+
+    .manifest-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+
+    footer.app-footer {
+      margin-top: 2rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    footer.app-footer a { color: var(--muted); }
   </style>
 </head>
 <body>
-  <h2>Clinisync API</h2>
+  <div class="page">
 
-  <div class="drop-zone" id="dropZone">
-    <p>Drag & drop an Excel file here, or click to upload</p>
-    <input type="file" id="fileInput" accept=".xlsx,.xls,.ods" />
+    <header class="app-header">
+      <h1>Clinisync</h1>
+      <p>Upload a clinical Excel workbook and get back de-identified, per-sheet CSVs ready for analysis.</p>
+    </header>
+
+    <details class="card" id="rulesCard">
+      <summary>What gets cleaned</summary>
+      <p style="margin: 0.75rem 0 0; color: var(--muted); font-size: 0.9rem;">
+        These rules apply automatically to every sheet in your upload. The output never contains the original NHI, DOB, address, or contact details.
+      </p>
+      <div class="rules-grid">
+        <div class="rule">
+          <strong>NHI &rarr; ID</strong>
+          <span>Replaced with sequential anonymized IDs (<code>ID-001</code>, <code>ID-002</code>, &hellip;) shared across sheets in the same upload.</span>
+        </div>
+        <div class="rule">
+          <strong>DOB &rarr; Age</strong>
+          <span>Converted to whole-year age, clamped to <code>0..130</code>. Invalid dates become empty.</span>
+        </div>
+        <div class="rule">
+          <strong>Address / Contact</strong>
+          <span>Columns named exactly <code>Address</code> or <code>Contact</code> are dropped entirely.</span>
+        </div>
+        <div class="rule">
+          <strong>Duplicates &amp; blanks</strong>
+          <span>Exact-duplicate rows after transformation are removed. Empty rows and unnamed columns are skipped.</span>
+        </div>
+      </div>
+    </details>
+
+    <div class="card">
+      <h2>Upload a workbook</h2>
+      <div class="drop-zone" id="dropZone">
+        <p>Drag &amp; drop an Excel file here, or click to choose one</p>
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.ods" />
+      </div>
+      <div class="selected-file" id="selectedFile" hidden></div>
+      <div class="controls">
+        <input type="password" id="apiKeyInput" placeholder="API key (only if your server requires one)" autocomplete="off" />
+      </div>
+      <div class="controls">
+        <button id="uploadBtn" class="btn-primary">Upload &amp; clean</button>
+        <button id="sampleBtn" class="btn-secondary" type="button">Try with sample workbook</button>
+        <button id="removeBtn" class="btn-danger" type="button" hidden>Remove selection</button>
+      </div>
+      <div class="status" id="status"></div>
+    </div>
+
+    <div class="card" id="results">
+      <h2 id="resultsTitle">Cleaning result</h2>
+      <div class="stats" id="statsGrid"></div>
+      <div class="sheets-list" id="sheetsList"></div>
+      <div class="manifest-row" id="manifestRow"></div>
+    </div>
+
+    <footer class="app-footer">
+      Clinisync &middot;
+      <a href="https://devilsdev.github.io/csv_procedure/" target="_blank" rel="noreferrer">Documentation</a>
+      &middot;
+      <a href="https://github.com/DevilsDev/csv_procedure" target="_blank" rel="noreferrer">GitHub</a>
+    </footer>
+
   </div>
-
-  <div class="api-key-row">
-    <input type="password" id="apiKeyInput" placeholder="API key (optional, if server requires one)" autocomplete="off" />
-  </div>
-
-  <button id="uploadBtn">Upload</button>
-  <button id="removeBtn">Remove</button>
-  <div id="response"></div>
 
   <script src="/js/upload.js"></script>
 </body>

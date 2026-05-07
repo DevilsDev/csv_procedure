@@ -6,6 +6,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { execFileSync } = require('child_process');
 const { generateAllFixtures } = require('../src/utils/generateFixtures');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -21,9 +22,19 @@ function ensureDir(relPath) {
   }
 }
 
+function ensurePublicSample() {
+  const samplePath = path.join(ROOT, 'public', 'samples', 'case-mix-sample.xlsx');
+  if (fs.existsSync(samplePath)) {
+    console.log('exists   public/samples/case-mix-sample.xlsx');
+    return;
+  }
+  execFileSync(process.execPath, [path.join(__dirname, 'generate-public-sample.js')], { stdio: 'inherit' });
+}
+
 function main() {
   RUNTIME_DIRS.forEach(ensureDir);
   generateAllFixtures();
+  ensurePublicSample();
   console.log('setup complete');
 }
 
